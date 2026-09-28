@@ -37,6 +37,7 @@ export async function GET(
       network: record.network,
       reason: outcome.reason,
       verifiedAt: new Date().toISOString(),
+      source: "LOCAL",
     };
     return NextResponse.json({ result, record }, { status: 200 });
   }

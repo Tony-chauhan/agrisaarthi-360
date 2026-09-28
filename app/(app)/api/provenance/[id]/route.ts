@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { provenanceMode } from "@/lib/provenance/provider";
+import { provenanceCapabilities, provenanceMode } from "@/lib/provenance/provider";
 import { lookupLocalRecord } from "@/lib/provenance/local-adapter";
 
 /**
@@ -26,5 +26,8 @@ export async function GET(
     );
   }
 
-  return NextResponse.json({ record, mode: provenanceMode() }, { status: 200 });
+  return NextResponse.json(
+    { record, mode: provenanceMode(), capabilities: provenanceCapabilities() },
+    { status: 200 }
+  );
 }

@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
   createProvenanceRecord,
+  provenanceCapabilities,
   provenanceMode,
 } from "@/lib/provenance/provider";
 import type {
+  AnchoringOutcome,
+  ProvenanceCapabilities,
   ProvenanceRecord,
   ProvenanceRequestInput,
 } from "@/lib/provenance/types";
@@ -14,9 +17,12 @@ import type { TimelineEventType } from "@/lib/timeline/types";
  * PROVENANCE API ROUTE (P1.4)
  *
  * POST /api/provenance — create a provenance record for an eligible event.
- * Server-side: whitelist-filter → canonical payload → SHA-256 → adapter.
- * Adapter/config failures return an honest unavailable result — never a
- * fabricated transaction.
+ * Server-side: whitelist-filter → canonical payload → SHA-256 → local
+ * adapter (the record is ALWAYS locally verified first). When the client
+ * explicitly sends anchorOnChain:true AND the testnet adapter is fully
+ * configured, the canonical hash is additionally anchored on-chain — the
+ * response's `anchoring` field reports honestly which of anchored /
+ * failed / skipped occurred.
  */
 
 export const runtime = "nodejs";
@@ -104,26 +110,35 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const outcome = await createProvenanceRecord({
-    eventId: raw.eventId.trim(),
-    eventType: raw.eventType as TimelineEventType,
-    eventTimestamp: raw.eventTimestamp,
-    entitySummary:
-      raw.entitySummary && typeof raw.entitySummary === "object"
-        ? (raw.entitySummary as Record<string, string>)
-        : {},
-    farmContext: {
-      crop:
-        typeof raw.farmContext.crop === "string"
-          ? raw.farmContext.crop.slice(0, 60)
-          : undefined,
-      season:
-        typeof raw.farmContext.season === "string"
-          ? raw.farmContext.season.slice(0, 12)
-          : undefined,
-      location: (raw.farmContext as { location: string }).location.slice(0, 120),
+  // Blockchain anchoring is EXPLICIT — only a client-requested true
+  // triggers an on-chain transaction (and only when the adapter is fully
+  // configured; otherwise the response carries an honest skipped reason).
+  const anchorOnChain =
+    (raw as { anchorOnChain?: unknown }).anchorOnChain === true;
+
+  const outcome = await createProvenanceRecord(
+    {
+      eventId: raw.eventId.trim(),
+      eventType: raw.eventType as TimelineEventType,
+      eventTimestamp: raw.eventTimestamp,
+      entitySummary:
+        raw.entitySummary && typeof raw.entitySummary === "object"
+          ? (raw.entitySummary as Record<string, string>)
+          : {},
+      farmContext: {
+        crop:
+          typeof raw.farmContext.crop === "string"
+            ? raw.farmContext.crop.slice(0, 60)
+            : undefined,
+        season:
+          typeof raw.farmContext.season === "string"
+            ? raw.farmContext.season.slice(0, 12)
+            : undefined,
+        location: (raw.farmContext as { location: string }).location.slice(0, 120),
+      },
     },
-  });
+    { anchorOnChain }
+  );
 
   if (outcome.status === "unavailable") {
     return NextResponse.json(
@@ -135,9 +150,13 @@ export async function POST(request: NextRequest) {
   const response: {
     record: ProvenanceRecord;
     mode: { adapter: string; chain: string; network: string };
+    anchoring: AnchoringOutcome;
+    capabilities: ProvenanceCapabilities;
   } = {
     record: outcome.record,
     mode: provenanceMode(),
+    anchoring: outcome.anchoring,
+    capabilities: provenanceCapabilities(),
   };
   return NextResponse.json(response, { status: 200 });
 }
