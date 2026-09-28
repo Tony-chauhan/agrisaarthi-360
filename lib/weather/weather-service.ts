@@ -153,9 +153,10 @@ export async function getWeatherForFarm(
 ): Promise<WeatherServiceResult> {
   const trimmed = location.trim();
 
-  // Empty/unknown location: do NOT fabricate coordinates — demo fallback.
+  // Empty location: do NOT fabricate coordinates or guess a default
+  // farm — report unavailable (the API route maps this to 400).
   if (trimmed === "") {
-    return { status: "success", snapshot: getDemoSnapshot() };
+    return { status: "unavailable" };
   }
 
   try {

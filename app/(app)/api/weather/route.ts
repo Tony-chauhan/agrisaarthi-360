@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
     bypassCache: refresh,
   });
 
-  // The service always returns a usable snapshot (demo fallback on failure);
-  // an explicit "unavailable" is only for truly empty input.
+  // Provider failures return a usable, labeled fallback snapshot (200);
+  // truly empty input maps to "unavailable" → 400.
+  if (result.status === "unavailable") {
+    return NextResponse.json<WeatherServiceResult>(result, { status: 400 });
+  }
   return NextResponse.json<WeatherServiceResult>(result);
 }

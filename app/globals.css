@@ -260,24 +260,6 @@ html:not(.js) [data-preloader] {
   display: none;
 }
 
-/* Agriculture marquee — slow, elegant, pauses on hover/focus */
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-.marquee-track {
-  animation: marquee 46s linear infinite;
-  will-change: transform;
-}
-.marquee:hover .marquee-track,
-.marquee:focus-within .marquee-track {
-  animation-play-state: paused;
-}
-
 /* Gentle float for hero data overlays */
 @keyframes overlay-float {
   0%,
@@ -340,7 +322,6 @@ dialog.landing-dialog::backdrop {
     transform: none;
     transition: none;
   }
-  .marquee-track,
   .overlay-float,
   .status-pulse,
   .scan-line {

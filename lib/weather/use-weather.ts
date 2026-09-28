@@ -12,12 +12,65 @@ import type {
  *
  * Calls the internal /api/weather route (never provider URLs directly).
  * Loads once per mount; re-fetches only on manual refresh or a location
- * change. No polling. In-flight request de-duplication via a ref.
+ * change. No polling.
+ *
+ * Request de-duplication at two levels:
+ *  - module level: concurrent mounts for the same location (e.g. the
+ *    dashboard mounts four hook instances) share ONE network request;
+ *  - per-hook: an in-flight ref prevents re-entrant loads within a mount.
+ * Completed results are also cached briefly per location, so co-mounted
+ * consumers reuse the same snapshot without extra fetches.
  */
 
 interface WeatherState {
   snapshot: WeatherSnapshot | null;
   status: "idle" | "loading" | "ready" | "unavailable";
+}
+
+/* ------------------------------------------------------------------ */
+/* Module-level request cache — shared across all hook instances       */
+/* ------------------------------------------------------------------ */
+
+const RESULT_TTL_MS = 60 * 1000; // short co-mount window; refresh stays cheap
+const pendingRequests = new Map<string, Promise<WeatherServiceResult>>();
+const recentResults = new Map<
+  string,
+  { result: WeatherServiceResult; at: number }
+>();
+
+function fetchWeatherShared(
+  location: string,
+  force: boolean
+): Promise<WeatherServiceResult> {
+  const key = `${location}::${force ? "refresh" : "read"}`;
+
+  if (!force) {
+    const recent = recentResults.get(key);
+    if (recent && Date.now() - recent.at < RESULT_TTL_MS) {
+      return Promise.resolve(recent.result);
+    }
+    const pending = pendingRequests.get(key);
+    if (pending) return pending;
+  }
+
+  const request = fetch(`/api/weather?location=${encodeURIComponent(location)}${
+    force ? "&refresh=1" : ""
+  }`)
+    .then(async (res): Promise<WeatherServiceResult> => {
+      if (!res.ok) return { status: "unavailable" };
+      return (await res.json()) as WeatherServiceResult;
+    })
+    .catch((): WeatherServiceResult => ({ status: "unavailable" }))
+    .then((result) => {
+      if (!force) recentResults.set(key, { result, at: Date.now() });
+      return result;
+    })
+    .finally(() => {
+      pendingRequests.delete(key);
+    });
+
+  if (!force) pendingRequests.set(key, request);
+  return request;
 }
 
 export function useWeather(location: string) {
@@ -50,23 +103,13 @@ export function useWeather(location: string) {
       setState((prev) => ({ ...prev, status: "loading" }));
 
       try {
-        const url = `/api/weather?location=${encodeURIComponent(trimmed)}${
-          options.force ? "&refresh=1" : ""
-        }`;
-        const res = await fetch(url);
-        if (!res.ok) {
-          setState({ snapshot: null, status: "unavailable" });
-          return;
-        }
-        const data = (await res.json()) as WeatherServiceResult;
+        const data = await fetchWeatherShared(trimmed, options.force === true);
         if (data.status === "success") {
           setState({ snapshot: data.snapshot, status: "ready" });
           lastLocation.current = trimmed;
         } else {
           setState({ snapshot: null, status: "unavailable" });
         }
-      } catch {
-        setState({ snapshot: null, status: "unavailable" });
       } finally {
         inFlight.current = false;
       }
