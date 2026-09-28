@@ -1,0 +1,349 @@
+@import "tailwindcss";
+
+/* ============================================================
+   AgriSaarthi 360 — Design Tokens (Tailwind v4 @theme)
+   Direction: contemporary agritech / warm-utilitarian
+   Fonts: Fraunces (display) + Instrument Sans (body)
+   ============================================================ */
+
+@theme {
+  /* Typography */
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  /* Canopy — deep agricultural green (primary brand) */
+  --color-canopy-50: #f3f8f4;
+  --color-canopy-100: #e2efe5;
+  --color-canopy-200: #c4ddcb;
+  --color-canopy-300: #97c3a5;
+  --color-canopy-400: #67a47e;
+  --color-canopy-500: #478863;
+  --color-canopy-600: #376c4e;
+  --color-canopy-700: #2d5640;
+  --color-canopy-800: #264534;
+  --color-canopy-900: #1f3a2c;
+  --color-canopy-950: #122117;
+
+  /* Sprout — fresh green accent (progress / positive) */
+  --color-sprout-400: #7fc78a;
+  --color-sprout-500: #52a95f;
+  --color-sprout-600: #3b8c48;
+
+  /* Loam — warm earth neutrals */
+  --color-loam-50: #faf7f1;
+  --color-loam-100: #f3ede1;
+  --color-loam-200: #e6dbc6;
+  --color-loam-300: #d4c3a3;
+  --color-loam-400: #b8a077;
+  --color-loam-500: #a08a5f;
+  --color-loam-600: #82704f;
+  --color-loam-700: #675a41;
+  --color-loam-800: #4d4331;
+  --color-loam-900: #2b251b;
+
+  /* Terracotta — action / decision accent */
+  --color-terracotta-500: #c25e3a;
+  --color-terracotta-600: #a84a28;
+  --color-terracotta-700: #8a3c22;
+
+  /* Harvest — amber for warnings */
+  --color-harvest-500: #d99a2b;
+  --color-harvest-600: #b47c1a;
+
+  /* Shadow language */
+  --shadow-card: 0 1px 2px rgb(31 58 44 / 0.06), 0 4px 12px rgb(31 58 44 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(31 58 44 / 0.08), 0 10px 28px rgb(31 58 44 / 0.12);
+  --shadow-deep: 0 24px 60px -12px rgb(18 33 23 / 0.35);
+
+  /* Dashboard product palette (brief §40) */
+  --color-ivory: #fff4d6;
+  --color-parchment: #f8e7c9;
+  --color-emerald-ink: #064e3b;
+  --color-graphite: #23262f;
+  --color-plum: #1e1033;
+  --color-lime: #b6ff2e;
+}
+
+/* ============================================================
+   Base layer
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-loam-50 text-loam-900 font-sans antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Accessible focus — visible on every interactive element */
+:focus-visible {
+  outline: 2px solid var(--color-terracotta-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip link for keyboard users */
+.skip-link {
+  @apply absolute left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-canopy-900 px-4 py-2 text-sm font-medium text-white transition-transform;
+}
+.skip-link:focus-visible {
+  @apply translate-y-0;
+}
+
+::selection {
+  background: var(--color-sprout-400);
+  color: var(--color-canopy-950);
+}
+
+/* ============================================================
+   Shared surface utilities
+   ============================================================ */
+
+.card-surface {
+  @apply rounded-2xl border border-canopy-100 bg-white shadow-card;
+}
+
+.hairline {
+  border-color: color-mix(in srgb, var(--color-canopy-900) 12%, transparent);
+}
+
+/* Data source badge strip — data-transparency requirement */
+.source-tag {
+  @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase;
+}
+
+/* Subtle page-enter animation (purposeful, one per page) */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise-in {
+  animation: rise-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .rise-in {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Dashboard section entrance — calm, staggered, transform/opacity only */
+@keyframes dashboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dashboard-enter {
+  animation: dashboard-enter 0.5s var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+.dashboard-enter:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+/* Typing dots for assistant loading state */
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: typing-dot 1.2s infinite;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ============================================================
+   Motion design tokens (landing experience)
+   ============================================================ */
+:root {
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-cinematic: cubic-bezier(0.65, 0, 0.15, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-snap: cubic-bezier(0.9, 0, 0.1, 1);
+  --duration-fast: 0.25s;
+  --duration-scene: 0.95s;
+}
+
+/* Lenis smooth-scroll base styles */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ============================================================
+   Landing page (public marketing experience) utilities
+   ============================================================ */
+
+/* Editorial metadata label above headings */
+.eyebrow {
+  @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-canopy-600;
+}
+
+/* Preloader chain words (FARM→DECISION→…) — staggered fade-in */
+@keyframes chain-word {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.chain-word {
+  animation: chain-word 0.5s var(--ease-soft, ease-out) both;
+}
+
+/* Anchor offset so sticky nav never covers section tops */
+.section-anchor {
+  scroll-margin-top: 5rem;
+}
+
+/* Scroll reveal — activated by the landing RevealObserver.
+   Hidden state applies only when JS is present (html.js); no-JS users
+   and crawlers always see the content. */
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s var(--ease-editorial),
+    transform 0.7s var(--ease-editorial);
+}
+html.js .reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Preloader exists only in a JS session — never traps no-JS visitors. */
+html:not(.js) [data-preloader] {
+  display: none;
+}
+
+/* Agriculture marquee — slow, elegant, pauses on hover/focus */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: marquee 46s linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Gentle float for hero data overlays */
+@keyframes overlay-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.overlay-float {
+  animation: overlay-float 6s ease-in-out infinite;
+}
+
+/* Pulsing status dot (LIVE / ANALYZING signals) */
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.8);
+  }
+}
+.status-pulse {
+  animation: status-pulse 1.8s ease-in-out infinite;
+}
+
+/* AI crop-health scan line (feature scene 02) */
+@keyframes scan-line {
+  0% {
+    top: 12%;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 84%;
+    opacity: 0.2;
+  }
+}
+.scan-line {
+  animation: scan-line 2.4s ease-in-out infinite alternate;
+}
+
+/* Honest sign-in dialog (native <dialog>) */
+dialog.landing-dialog {
+  @apply rounded-2xl border border-canopy-100 bg-white p-0 shadow-deep;
+}
+dialog.landing-dialog::backdrop {
+  background: rgb(18 33 23 / 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .marquee-track,
+  .overlay-float,
+  .status-pulse,
+  .scan-line {
+    animation: none;
+  }
+}
