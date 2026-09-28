@@ -6,7 +6,8 @@
 
 **An AI-assisted agriculture decision-support platform** that connects farm context, crop decisions,
 crop health, weather actions, farm operations, planning, timeline events, provenance and an AI
-assistant into **one connected workflow**.
+assistant into **one connected workflow** — with optional blockchain anchoring for the records that
+matter most.
 
 > _One farm. One connected context. One decision workflow._
 
@@ -71,7 +72,7 @@ flowchart LR
 | **DECISION** | What fits this farm (deterministic crop engine) and what the field is showing (AI vision) | Crop Advisor, Crop Health |
 | **ACTION** | Live conditions become the next practical step; operations are matched to machinery | Weather → Action, Farm Operations |
 | **PLAN** | Today's decision and action become dated, season-long tasks | Farm Planner |
-| **PROOF** | Completed work becomes a timeline; key events keep tamper-evident records | Timeline, Provenance |
+| **PROOF** | Completed work becomes a timeline; key events keep tamper-evident records — locally verified by default, optionally anchored on a public testnet | Timeline, Provenance |
 
 ---
 
@@ -128,18 +129,19 @@ flowchart TB
     end
 
     subgraph SERVER["SERVER — Route Handlers (server-only)"]
-        API["/api weather · crop-health · assistant ·<br/>planner/generate · calendar · provenance×3"]
+        API["/api weather · crop-health · assistant ·<br/>planner/generate · calendar · provenance×4"]
     end
 
     subgraph EXTERNAL["EXTERNAL API / AI MODEL"]
         GEMINI["Google Gemini<br/>vision + text"]
         METEO["Open-Meteo<br/>geocoding + forecast"]
+        CHAIN["Polygon Amoy testnet<br/>ProvenanceAnchor contract"]
     end
 
     subgraph FALLBACK["LOCAL FALLBACK (labeled, deterministic)"]
         DEMO["Demo providers<br/>for AI + weather"]
-        LOCAL["Local provenance adapter<br/>(default)"]
-        TESTNET["Testnet adapter<br/>(env-gated, off by default)"]
+        LOCAL["Local provenance adapter<br/>(default — always the floor)"]
+        TESTNET["Testnet adapter (ethers v6)<br/>env-gated, opt-in"]
     end
 
     SHELL --> PROVIDERS
@@ -151,7 +153,8 @@ flowchart TB
     API --> GEMINI & METEO
     API -. "on failure — labeled" .-> DEMO
     CANON --> LOCAL
-    CANON -. "PROVENANCE_ADAPTER=testnet" .-> TESTNET
+    CANON -. "PROVENANCE_ADAPTER=testnet + signer" .-> TESTNET
+    TESTNET --> CHAIN
 ```
 
 **Key architectural rules** (all enforced in source): engines are framework-free pure functions;
@@ -173,7 +176,8 @@ plugin directly.
 | Icons | **lucide-react** | — |
 | AI | **Google Gemini** (REST, server-side) | Vision (crop health) + text (assistant), model via env |
 | Weather | **Open-Meteo** (keyless, server-side) | Geocoding + 3-day forecast, normalized snapshot |
-| Records | **SHA-256 local verification** (default) | Testnet adapter present but env-gated off |
+| Records | **SHA-256 local verification** (default) + **optional on-chain anchoring** | Local adapter always; testnet adapter (ethers v6) env-gated opt-in |
+| Blockchain contract | **ProvenanceAnchor** (Solidity, minimal) | `docs/blockchain/ProvenanceAnchor.sol` — bytes32 hash anchoring only |
 
 *(Listed from `package.json` and imports — no removed libraries included.)*
 
@@ -191,7 +195,7 @@ plugin directly.
 | 🚜 Farm Operations | The work behind the crop | 🟡 Session-based | Machinery matching over service data (no real booking) |
 | 📋 Farm Planner | The season, scheduled | ✅ Implemented | Deterministic engine + wheat crop calendar |
 | 🕘 Timeline | What actually happened | ✅ Implemented | Real session events only — nothing seeded |
-| 🔐 Provenance | Tamper-evident records | 🟡 Local verification | SHA-256 canonical records; testnet adapter env-gated off |
+| 🔐 Provenance | Tamper-evident records | 🟡 Local + optional testnet | SHA-256 canonical records; explicit on-chain anchoring (ethers v6) when configured |
 | 🤖 AI Assistant | Answers with the farm in mind | ✅ Implemented | Gemini + context packet + restricted system instruction |
 | 🖥️ Landing / Product Experience | The product story, told properly | ✅ Implemented | Typography-led editorial system, GSAP/Lenis motion |
 
@@ -334,18 +338,21 @@ flowchart LR
     A["Action in the app"] --> B["Timeline event<br/>(real action only)"]
     B --> C["Canonical payload<br/>(field allowlist, stable order)"]
     C --> D["SHA-256 hash<br/>+ provenance record"]
-    D --> E["Verification<br/>recompute + compare"]
-    E --> F["Proof state:<br/>local-verified"]
+    D --> E["LOCAL VERIFIED<br/>(default)"]
+    E -. "explicit opt-in" .-> F["Anchor on Testnet"]
+    F --> G["BLOCKCHAIN VERIFIED<br/>(real tx hash)"]
 ```
 
 - **Nine event types** are emitted (crop selection, weather action, health check, task lifecycle, operation lifecycle, farm records, verification). Events come **only from real actions** — nothing seeds history.
 - Integrity mechanics: dedupe by `(type, entity, id)`, newest-first ordering, 200-event cap — all in pure functions.
-- **Verification is local by default:** the canonical payload is hashed with SHA-256 and verified by recompute-and-compare → `local-verified`.
-- A **testnet adapter exists** (`polygon-amoy` configured via env) but is **off unless** `PROVENANCE_ADAPTER=testnet` plus chain/RPC/contract variables are set.
+- **Local verification is the default:** the canonical payload is hashed with SHA-256 and verified by recompute-and-compare → `local-verified`. Every record is created locally first.
+- **Blockchain anchoring is explicit and optional:** when the testnet adapter is fully configured, a separate **"Anchor on Testnet"** action commits the canonical hash on-chain through the minimal `ProvenanceAnchor` contract (ethers v6, server-side only). Verification then queries the actual contract — `blockchain-verified` is shown **only** after a real on-chain check succeeds, with the real transaction hash.
+- **Failure never lies:** if anchoring or verification fails, the record stays `local-verified` and the UI says so — no transaction hash is ever fabricated.
 
-> **Precise language matters:** records are **"local verification" / "tamper-evident"** — not
-> "blockchain". No blockchain claim is made anywhere in the UI, and the badge type system
-> distinguishes `local-verified` from `blockchain-verified` (only local is reachable by default).
+> **Precise language:** "local SHA-256 verification is the default; optional testnet blockchain
+> anchoring can publish the canonical record hash for on-chain verification." The badge type system
+> distinguishes `local-verified` from `blockchain-verified`, and the UI only ever displays the
+> status the code actually observed.
 
 ### 🤖 AI Assistant — context-aware, restricted, honest
 
@@ -406,12 +413,14 @@ The recommended 2–5 minute demonstration of **FARM → DECISION → ACTION →
 7. **Farm Operations** — pick an operation, review matched machinery and the availability note.
 8. **Farm Planner** — generate the season plan; tasks reflect the crop calendar and latest context.
 9. **Complete a task** — watch the timeline record it.
-10. **Provenance** — record a key event and run verification — the `local-verified` badge.
-11. **AI Assistant** — ask *"Should I irrigate my wheat today?"* and observe the context packet and the caveat.
-12. **Add a suggested follow-up to the plan** — explicit confirmation, then see it planned.
+10. **Provenance** — record a key event — the `local-verified` badge with the SHA-256 hash.
+11. **Anchor on Testnet** *(if configured)* — explicit on-chain anchoring of the canonical hash; the real transaction hash appears, then **Verify Again** confirms **BLOCKCHAIN VERIFIED**. Without configuration, the demo shows the honest fallback: the record stays locally verified.
+12. **AI Assistant** — ask *"Should I irrigate my wheat today?"* and observe the context packet and the caveat.
+13. **Add a suggested follow-up to the plan** — explicit confirmation, then see it planned.
 
-> Demo-day resilience: every external dependency (weather, AI) degrades to a **labeled fallback**,
-> so the demo continues coherently even when the network does not.
+> Demo-day resilience: every external dependency (weather, AI, **blockchain**) degrades to a
+> **labeled fallback**, so the demo continues coherently even when the network does not. Blockchain
+> appears only at the PROOF stage — and only when you choose to anchor.
 
 ---
 
@@ -427,9 +436,10 @@ repository. External provider calls happen **only** inside these routes.
 | `/api/assistant` | POST | Context-aware assistant answer | Gemini text → fallback |
 | `/api/planner/generate` | POST | Generate the season plan | Pure planner engine |
 | `/api/calendar` | GET | Crop calendar templates (`?crop=&season=`) | Static knowledge data |
-| `/api/provenance` | POST | Create a tamper-evident record | Local SHA-256 adapter |
-| `/api/provenance/[id]` | GET | Fetch a record | Local adapter |
-| `/api/provenance/[id]/verify` | GET | Verify a record (recompute + compare) | Local adapter |
+| `/api/provenance` | POST | Create a tamper-evident record (optionally anchor on-chain with `anchorOnChain:true`) | Local SHA-256 adapter (+ testnet anchor when configured) |
+| `/api/provenance/anchor` | POST | **Explicit** on-chain anchoring of an existing record (`{recordHash}`) | ProvenanceAnchor contract via ethers v6 |
+| `/api/provenance/[id]` | GET | Fetch a record + capability report | Local registry |
+| `/api/provenance/[id]/verify` | GET | Verify a record (local recompute; on-chain check for anchored records) | Adapter-routed |
 
 Minimal response shapes (from the type definitions):
 
@@ -483,10 +493,11 @@ agrisaarthi-360/
 │       ├── weather/            # Live weather → action
 │       ├── operations/         # Operations workflow
 │       ├── planner/            # Season planner
-│       ├── timeline/           # Timeline + provenance verify
+│       ├── timeline/           # Timeline + provenance verify + blockchain anchoring
 │       ├── assistant/          # Full assistant view
 │       └── api/                # Server route handlers (weather, crop-health,
-│                               #   assistant, planner, calendar, provenance×3)
+│                               #   assistant, planner, calendar, provenance×4
+│                               #   incl. /provenance/anchor for on-chain anchoring)
 ├── components/
 │   ├── landing/                # Editorial landing: sections/ · motion/ · photography/
 │   ├── dashboard/              # Summary header, KPI cards, previews
@@ -503,13 +514,15 @@ agrisaarthi-360/
 │   ├── operations/             # Machinery knowledge + matching
 │   ├── planner/                # Planner engine, wheat calendar, task store
 │   ├── timeline/               # Event service (dedupe, order, cap)
-│   ├── provenance/             # Canonicalizer, SHA-256, local + testnet adapters
+│   ├── provenance/             # Canonicalizer, SHA-256, local + testnet (ethers) adapters
 │   ├── assistant/              # Context packet, topic routing, Gemini provider
 │   ├── farm-context.tsx        # FarmProvider (shared session state)
 │   └── gsap.ts                 # Canonical GSAP registration (single source)
 ├── scripts/
-│   └── verify-*.ts             # 7 verification suites (run via `npx tsx`)
+│   ├── verify-*.ts             # 8 verification suites (run via `npx tsx`)
+│   └── testnet-smoke.ts        # REAL on-chain smoke test (env-gated; skips honestly)
 ├── docs/
+│   ├── blockchain/             # ProvenanceAnchor.sol + blockchain documentation
 │   └── reference-templates/    # Design reference images (not part of the app)
 ├── public/photography/         # 2 editorial photos (hero + crop health)
 ├── .env.example                # Documented environment template
@@ -526,6 +539,7 @@ agrisaarthi-360/
 - **npm** (the project ships `package-lock.json`)
 - A **Google Gemini API key** (free tier works) — optional; without it the app runs on labeled fallbacks
 - No weather API key — Open-Meteo is keyless
+- For **optional blockchain anchoring**: a funded testnet wallet + deployed `ProvenanceAnchor` contract (see `docs/blockchain/README.md`) — the app fully functions without it
 
 ### Installation
 
@@ -552,19 +566,23 @@ npm start
 | `GEMINI_API_KEY` | Optional | Server-side only. Without it, crop health + assistant use labeled fallbacks |
 | `GEMINI_VISION_MODEL` | Optional | Crop-health vision model (default: `gemini-3.6-flash`) |
 | `GEMINI_ASSISTANT_MODEL` | Optional | Assistant text model (default: `gemini-3.6-flash`) |
-| `PROVENANCE_ADAPTER` | Optional | `local` (default) or `testnet` |
-| `PROVENANCE_CHAIN` / `PROVENANCE_NETWORK` / `PROVENANCE_RPC_ENDPOINT` / `PROVENANCE_API_KEY` / `PROVENANCE_CONTRACT_ADDRESS` | Optional | Testnet verification only — the app fully functions without them |
+| `PROVENANCE_ADAPTER` | Optional · TESTNET ONLY | `local` (default) or `testnet` |
+| `PROVENANCE_CHAIN` / `PROVENANCE_NETWORK` | Optional · TESTNET ONLY | Chain/network identifiers (e.g. `polygon-amoy` / `amoy`) |
+| `PROVENANCE_RPC_ENDPOINT` | Optional · TESTNET ONLY · SERVER ONLY | RPC URL for the configured testnet |
+| `PROVENANCE_API_KEY` | Optional · SERVER ONLY | RPC provider key (sent as a bearer header, server-side only) |
+| `PROVENANCE_CONTRACT_ADDRESS` | Optional · TESTNET ONLY | Deployed `ProvenanceAnchor` contract address |
+| `PROVENANCE_PRIVATE_KEY` | Optional · TESTNET ONLY · SERVER ONLY | Funding wallet key for anchoring transactions — read only inside the testnet adapter; never sent to the browser; `.env.local` is gitignored |
 
 ---
 
 ## Verification
 
-The repository ships **seven verification suites** (`scripts/verify-*.ts`) — assertion scripts that
-check engine determinism, threshold wording, fallback labeling, journey wiring and truthfulness of
-user-facing copy:
+The repository ships **eight verification suites** (`scripts/verify-*.ts`) — assertion scripts that
+check engine determinism, threshold wording, fallback labeling, journey wiring, truthfulness of
+user-facing copy, and blockchain-provenance behavior:
 
 ```bash
-for s in crop-engine crop-health weather operations assistant golden-demo p1; do
+for s in crop-engine crop-health weather operations assistant golden-demo p1 provenance-blockchain; do
   npx tsx scripts/verify-$s.ts
 done
 ```
@@ -578,23 +596,68 @@ done
 | `verify-assistant` | Context packet, restrictions, fallback behavior |
 | `verify-golden-demo` | The end-to-end sample-farm journey (Wheat ranks first) |
 | `verify-p1` | Calendar, planner, timeline integrity, provenance round-trip, robot confirmation flow |
+| `verify-provenance-blockchain` | Blockchain provenance: canonical determinism, adapter selection, malformed-receipt rejection, no fabricated hashes, on-chain verification of the anchored hash, duplicate idempotency, failure fallback, secret isolation (mocked chain clients) |
+
+Plus a **real testnet smoke test** — `npx tsx scripts/testnet-smoke.ts` — which submits an actual
+on-chain anchor transaction and verifies it, **only** when full testnet configuration is present
+(it skips honestly otherwise; mocked results are never passed off as chain tests).
 
 Also run `npm run typecheck` (TypeScript strict, zero `any`). Current state: **all suites green,
-clean build (21 routes), landing first-load ~177 kB**.
+clean build (22 routes), landing first-load ~177 kB**.
 
 ---
 
-## Honest Limitations
+## Blockchain-backed Provenance
 
-Stated plainly, because trust is the product:
+Blockchain appears at exactly one point in the product story — the **PROOF** stage — as trust
+infrastructure, not a feature page:
 
-- **Session-only persistence** — no database; reloading clears state (documented in the app).
-- **No authentication** — the workspace opens directly; the landing page does not pretend otherwise.
-- **Operations are service data** — no real booking, availability, or payment.
-- **Verification is local** — SHA-256 tamper-evidence, not a blockchain (the testnet adapter is env-gated off).
-- **Wheat calendar depth** — planner templates currently cover wheat; the calendar is data and extends cleanly.
-- **Unauthenticated API routes** — fine for local/demo use; not safe for public deployment.
-- **Suitability ≠ accuracy** — the crop score is configured decision weights, and the UI says so.
+```mermaid
+flowchart TD
+    A["Timeline event<br/>(real action)"] --> B["Canonical payload<br/>(whitelisted fields only)"]
+    B --> C["SHA-256 record hash"]
+    C --> D{"Provenance adapter"}
+    D -->|"default"| L["Local adapter"]
+    L --> LV["LOCAL VERIFIED"]
+    D -->|"opt-in env-gated"| T["Testnet adapter (ethers v6)"]
+    T --> E["ProvenanceAnchor.anchor(hash, idHash)"]
+    E --> TX["Transaction mined"]
+    TX --> V["Verify: local recompute +<br/>contract.isAnchored(hash)"]
+    V --> BV["BLOCKCHAIN VERIFIED"]
+    T -. "RPC / contract / funds failure" .-> F["BLOCKCHAIN UNAVAILABLE<br/>record stays LOCAL VERIFIED"]
+
+    style LV fill:#f8e7c9,stroke:#064e3b
+    style BV fill:#064e3b,stroke:#b6ff2e,color:#fff4d6
+    style F fill:#fef2f2,stroke:#b91c1c
+
+```
+
+**Why blockchain here:** a locally verified record proves *the app says* the event happened.
+Anchoring the canonical hash on a public testnet adds an independent commitment — *this exact record
+existed at this point in time* — that anyone can re-check without trusting the application server.
+
+| Layer | Storage |
+|---|---|
+| Farm details, crop images, AI output, planner data | Off-chain (never hashed into on-chain data) |
+| Canonical event summary fields | Off-chain — hashed into the canonical payload |
+| **SHA-256 of the canonical payload** | **On-chain anchor (bytes32)** |
+| Record id | On-chain only as a keccak256 hash (raw id never goes on-chain) |
+| Transaction metadata (tx hash, block, submitter) | On-chain / provider |
+| Full canonical record | Off-chain |
+
+**Verification states** — each shown only when actually true:
+
+| State | When |
+|---|---|
+| `LOCAL VERIFIED` | Default. Hash registered in-app and recomputed on verify. |
+| `BLOCKCHAIN VERIFIED` | Only after the configured contract confirms the hash on-chain. |
+| `BLOCKCHAIN PENDING` | Not used as a success claim — submission failures resolve to unavailable, keeping the record locally verified. |
+| `BLOCKCHAIN UNAVAILABLE` | Submission/verification failed — the reason is shown; the record remains locally verified. |
+
+- **Minimal contract:** one write function (`anchor(bytes32,bytes32)`), one event, three reads; duplicate anchoring reverts on-chain and is handled as an idempotent success. No payment, token, admin, or user-data logic. Source: `docs/blockchain/ProvenanceAnchor.sol`.
+- **Server-only execution:** anchoring and verification run exclusively in Next.js route handlers; the private key and RPC credentials live in `.env.local` (gitignored) and are read only inside `lib/provenance/testnet-adapter.ts`. The browser bundle never sees them.
+- **No fabrication:** a transaction hash is displayed only from a real receipt; `BLOCKCHAIN VERIFIED` is rendered only after `contract.isAnchored(recordHash)` returns true for the exact record hash.
+- **Local is the floor:** every failure path preserves local verification — blockchain problems never take the record down.
 
 ---
 
@@ -603,6 +666,9 @@ Stated plainly, because trust is the product:
 - **Canonical GSAP architecture** — one module (`lib/gsap.ts`) owns the single plugin registration;
   every consumer imports from it. No duplicate GSAP instances, no per-frame React state, verified
   trigger cleanup.
+- **Blockchain isolation** — all chain interaction lives behind the `ChainAdapter` seam in
+  `lib/provenance/`; UI and engines never import web3 libraries, and the local adapter remains the
+  default path when the chain is unavailable.
 - **One motion clock** — GSAP's ticker drives Lenis; motion tiers (`high / medium / low / none`) plus
   `prefers-reduced-motion` degrade the landing experience gracefully.
 - **Two-mode design system** — a typography-led editorial landing (dark canopy narrative with
@@ -615,10 +681,56 @@ Stated plainly, because trust is the product:
 
 ---
 
+## 👥 Team
+
+<div align="center">
+
+### DesignXTeam
+
+**AgriSaarthi 360** was designed and developed by **DesignXTeam** as a collaborative hackathon project.
+
+</div>
+
+| Team Member | Responsibility |
+|---|---|
+| **Tony Chauhan** | Team Leader · Product & Technical Direction |
+| **Rishita** | Team Member |
+| **Deepanshu** | Team Member |
+| **Ram Kumar** | Team Member |
+
+### Team Mission
+
+> **Build technology that turns agricultural data and context into practical, transparent, and actionable decisions.**
+
+The team worked together across product thinking, application development, AI integration, user
+experience, testing, and the end-to-end FARM → DECISION → ACTION → PLAN → PROOF workflow.
+
+### Project
+
+**AgriSaarthi 360**
+
+**Core workflow:**
+
+```text
+🌾 FARM
+   ↓
+🧠 DECISION
+   ↓
+⚡ ACTION
+   ↓
+📋 PLAN
+   ↓
+🔎 PROOF
+```
+
+---
+
 ## License & Scope
 
 Built as a hackathon project. Decision-support software — **not** a replacement for qualified
 agricultural experts. No yield, profit, diagnosis or weather-outcome guarantees are made or implied.
+Blockchain anchoring is optional infrastructure for the PROOF stage — records are locally verified
+by default, and on-chain status is claimed only when actually verified on the configured testnet.
 
 <div align="center">
 
