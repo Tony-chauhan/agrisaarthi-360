@@ -68,10 +68,22 @@ export function Operations() {
           ))}
         </ol>
 
-        {/* Catalogue + honesty */}
+        {/* CTA — visually closes the flow above (issue 13) */}
+        <div className="mt-8 flex justify-end">
+          <Link
+            href="/operations"
+            className="group inline-flex min-h-12 items-center gap-2 text-base font-semibold text-lime"
+          >
+            {L.operations.cta}
+            <ArrowRight
+              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
+              aria-hidden
+            />
+          </Link>
+        </div>
         <div className="mt-14 flex flex-wrap items-start justify-between gap-8">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">
               {L.opsSupportedLabel}
             </p>
             <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
@@ -92,16 +104,6 @@ export function Operations() {
             <p className="mt-3 text-xs leading-relaxed text-white/50">
               {L.operations.serviceNote}
             </p>
-            <Link
-              href="/operations"
-              className="group mt-5 inline-flex min-h-12 items-center gap-2 text-base font-semibold text-lime"
-            >
-              {L.operations.cta}
-              <ArrowRight
-                className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
-                aria-hidden
-              />
-            </Link>
           </div>
         </div>
       </div>

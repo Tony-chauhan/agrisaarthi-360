@@ -21,7 +21,7 @@ export function VerificationBadge({
 
   if (status === "blockchain-verified") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-sprout-400/40 bg-sprout-400/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-canopy-700">
+      <span className="inline-flex items-center gap-1 rounded-full border border-sprout-400/40 bg-sprout-400/15 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-canopy-700">
         <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
         {t.verification.blockchainVerified}
       </span>
@@ -30,7 +30,7 @@ export function VerificationBadge({
 
   if (status === "local-verified") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-canopy-200 bg-canopy-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-canopy-700">
+      <span className="inline-flex items-center gap-1 rounded-full border border-canopy-200 bg-canopy-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-canopy-700">
         <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
         {t.verification.localVerified}
       </span>
@@ -39,7 +39,7 @@ export function VerificationBadge({
 
   if (status === "pending") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-harvest-500/40 bg-harvest-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-harvest-600">
+      <span className="inline-flex items-center gap-1 rounded-full border border-harvest-500/40 bg-harvest-500/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-harvest-600">
         <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden />
         {t.verification.pending}
       </span>
@@ -47,7 +47,7 @@ export function VerificationBadge({
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-700">
+    <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-red-700">
       <ShieldAlert className="h-3.5 w-3.5" aria-hidden />
       {t.verification.unavailable}
     </span>

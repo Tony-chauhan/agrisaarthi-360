@@ -73,7 +73,7 @@ export function Assistant() {
                 <p className="text-sm font-semibold text-white">
                   {L.assistantName}
                 </p>
-                <p className="text-[11px] text-canopy-300">
+                <p className="text-xs text-canopy-300">
                   {L.assistantConnected}
                 </p>
               </div>
@@ -87,7 +87,7 @@ export function Assistant() {
                 <p className="max-w-[85%] rounded-2xl rounded-br-md bg-canopy-700 px-4 py-2.5 text-sm text-white">
                   {L.assistant.prompt}
                 </p>
-                <p className="px-1 text-[11px] text-canopy-300">
+                <p className="px-1 text-xs text-canopy-300">
                   {L.assistant.contextLine}
                 </p>
               </div>
@@ -96,7 +96,7 @@ export function Assistant() {
                 {L.assistant.answer}
               </p>
 
-              <p className="mt-1 border-t border-white/10 pt-3 text-[11px] leading-relaxed text-canopy-300">
+              <p className="mt-1 border-t border-white/10 pt-3 text-xs leading-relaxed text-canopy-300">
                 {L.assistant.autonomyNote}
               </p>
             </div>

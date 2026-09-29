@@ -63,12 +63,12 @@ export function TaskCard({
             </Badge>
             <DataSourceTag source={task.sourceLabel} />
           </div>
-          <p className="flex items-center gap-1 text-[11px] text-loam-500">
+          <p className="flex items-center gap-1 text-xs text-loam-500">
             <CalendarDays className="h-3 w-3" aria-hidden />
             {t.common.duePrefix(task.dueAt)}
           </p>
           {task.weatherDependency ? (
-            <p className="flex items-center gap-1 text-[11px] font-medium text-canopy-600">
+            <p className="flex items-center gap-1 text-xs font-medium text-canopy-600">
               <CloudSun className="h-3 w-3" aria-hidden />
               {t.planner.weatherAware}
             </p>

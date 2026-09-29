@@ -26,7 +26,7 @@ export function SidebarFarmCard() {
   if (isProfileEmpty) {
     return (
       <div className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">
+        <p className="text-xs font-semibold tracking-[0.14em] text-white/50">
           {t.chrome.currentFarm}
         </p>
         <p className="mt-1.5 text-sm text-white/70">
@@ -61,7 +61,7 @@ export function SidebarFarmCard() {
   return (
     <div className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">
+        <p className="text-xs font-semibold tracking-[0.14em] text-white/50">
           {t.chrome.currentFarm}
         </p>
         <Badge

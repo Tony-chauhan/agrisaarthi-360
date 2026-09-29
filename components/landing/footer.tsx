@@ -43,7 +43,7 @@ export function LandingFooter() {
             <p className="text-sm text-canopy-200/90">{t.landing.brandTagline}</p>
             <p
               aria-hidden
-              className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-canopy-300/70"
+              className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-canopy-300/70"
             >
               {chain.join(" · ")}
             </p>
@@ -54,7 +54,7 @@ export function LandingFooter() {
 
           {/* Explore */}
           <nav aria-label={t.landing.footerExplore}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-canopy-300">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-canopy-300">
               {t.landing.footerExplore}
             </p>
             <ul className="mt-3 flex flex-col gap-1">
@@ -73,7 +73,7 @@ export function LandingFooter() {
 
           {/* Get started + legal */}
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-canopy-300">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-canopy-300">
               {t.landing.footerGetStarted}
             </p>
             <div className="mt-3 flex flex-col items-start gap-2">

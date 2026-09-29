@@ -39,7 +39,7 @@ export function Hero() {
             priority
             data-hero-critical
             sizes="100vw"
-            className="object-cover will-change-transform"
+            className="h-full w-full object-cover will-change-transform"
             style={{ filter: "saturate(1.05) contrast(1.02) brightness(0.98)" }}
           />
         </div>
@@ -109,12 +109,12 @@ export function Hero() {
                   <div className="flex items-baseline gap-3 py-1.5">
                     <span
                       aria-hidden
-                      className="w-6 shrink-0 text-[10px] font-semibold tracking-[0.14em] text-lime"
+                      className="w-6 shrink-0 text-xs font-semibold tracking-[0.14em] text-lime"
                     >
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                      <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-white/50">
                         {row.label}
                       </span>
                       <span className="block font-display text-lg font-semibold text-white">
@@ -131,7 +131,7 @@ export function Hero() {
                 </li>
               ))}
             </ol>
-            <p className="mt-4 border-t border-white/10 pt-3 text-[11px] text-white/45">
+            <p className="mt-4 border-t border-white/10 pt-3 text-xs text-white/45">
               {L.hero.sampleNote}
             </p>
           </div>

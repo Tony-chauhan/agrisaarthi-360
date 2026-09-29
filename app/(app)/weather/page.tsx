@@ -122,7 +122,7 @@ export default function WeatherPage() {
                 </div>
                 <dl className="grid flex-1 grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
-                    <dt className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-loam-500">
                       {t.weather.feelsLike}
                     </dt>
                     <dd className="mt-0.5 font-semibold text-canopy-900">
@@ -132,7 +132,7 @@ export default function WeatherPage() {
                     </dd>
                   </div>
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
-                    <dt className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-loam-500">
                       {t.weather.humidity}
                     </dt>
                     <dd className="mt-0.5 font-semibold text-canopy-900">
@@ -142,7 +142,7 @@ export default function WeatherPage() {
                     </dd>
                   </div>
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
-                    <dt className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-loam-500">
                       {t.weather.precipitation}
                     </dt>
                     <dd className="mt-0.5 font-semibold text-canopy-900">
@@ -152,7 +152,7 @@ export default function WeatherPage() {
                     </dd>
                   </div>
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
-                    <dt className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-loam-500">
+                    <dt className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-loam-500">
                       <Wind className="h-3 w-3" aria-hidden />
                       {t.weather.wind}
                     </dt>
@@ -168,7 +168,7 @@ export default function WeatherPage() {
                 const action = deriveFarmWeatherAction(snapshot, profile, lang);
                 return (
                   <div className="mt-5 rounded-xl border-l-4 border-terracotta-600 bg-terracotta-500/5 px-5 py-4">
-                    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-terracotta-600">
+                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-terracotta-600">
                       {t.weather.farmAction}
                       <Badge tone="accent">{t.weather.decisionEngine}</Badge>
                       {action.priority === "caution" ? (

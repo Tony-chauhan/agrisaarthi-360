@@ -59,7 +59,7 @@ export function System() {
                     aria-hidden
                     className="absolute -left-[2.29rem] top-1.5 h-3 w-3 rounded-full bg-lime ring-4 ring-canopy-950"
                   />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <p className="mt-1 font-display text-2xl font-semibold tracking-tight sm:text-3xl">

@@ -214,7 +214,7 @@ export default function OperationsPage() {
   const { snapshot } = useWeather(profile.location);
   const { t, lang } = useLanguage();
   const weatherAction = snapshot
-    ? deriveFarmWeatherAction(snapshot, profile)
+    ? deriveFarmWeatherAction(snapshot, profile, lang)
     : null;
 
   const [step, setStep] = useState<FlowStep>(1);

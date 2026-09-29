@@ -46,6 +46,22 @@ export const en = {
       possible: "Possible",
       uncertain: "Uncertain",
     },
+    weatherConditions: {
+      "0": "Clear sky",
+      "1": "Mainly clear",
+      "2": "Partly cloudy",
+      "3": "Overcast",
+      "45": "Fog",
+      "51": "Drizzle",
+      "61": "Rain",
+      "66": "Freezing rain",
+      "71": "Snow",
+      "80": "Rain showers",
+      "85": "Snow showers",
+      "95": "Thunderstorm",
+      "96": "Thunderstorm with hail",
+      mixed: "Mixed conditions",
+    },
   },
 
   source: {
@@ -162,12 +178,12 @@ export const en = {
     problem: {
       eyebrow: "The problem",
       statementLines: [
-        "YOUR FARM SHOULDN'T NEED",
-        "FIVE DIFFERENT PLACES",
-        "TO MAKE ONE DECISION.",
+        "Your farm shouldn't need",
+        "five different places",
+        "to make one decision.",
       ],
       fragments: ["Farm", "Crop", "Health", "Weather", "Operations", "Plan"],
-      conclusion: "ONE CONNECTED CONTEXT.",
+      conclusion: "One connected context.",
     },
     system: {
       eyebrow: "The core idea",

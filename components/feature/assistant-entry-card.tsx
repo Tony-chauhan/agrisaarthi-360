@@ -48,7 +48,7 @@ export function AssistantEntryCard() {
               </p>
               <div className="mt-1.5 flex items-center gap-2">
                 <DataSourceTag source={latestAssistantInteraction.source} />
-                <span className="flex items-center gap-1 text-[11px] text-loam-500">
+                <span className="flex items-center gap-1 text-xs text-loam-500">
                   <CheckCircle2 className="h-3 w-3" aria-hidden />
                   {t.dashboard.assistantAnswered}
                 </span>

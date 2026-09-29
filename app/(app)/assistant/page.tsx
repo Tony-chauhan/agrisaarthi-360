@@ -17,6 +17,8 @@ import { Alert } from "@/components/ui/alert";
 import { useFarmProfile } from "@/lib/farm-context";
 import { useWeather } from "@/lib/weather/use-weather";
 import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
+import { describeWeatherCode } from "@/lib/weather/weather-utils";
+import type { Lang } from "@/lib/i18n/types";
 import { buildAssistantContext } from "@/lib/assistant/assistant-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import type { AssistantResponse } from "@/lib/assistant/types";
@@ -53,14 +55,19 @@ function buildWeatherSummary(
   snapshot: NonNullable<
     ReturnType<typeof useWeather>["snapshot"]
   >,
-  profile: ReturnType<typeof useFarmProfile>["profile"]
+  profile: ReturnType<typeof useFarmProfile>["profile"],
+  lang: Lang = "en"
 ): { summary: string; actionTitle: string; actionMessage: string; isLive: boolean } | null {
-  const action = deriveFarmWeatherAction(snapshot, profile);
+  const action = deriveFarmWeatherAction(snapshot, profile, lang);
   const rain = snapshot.forecast[0]?.precipitationProbabilityPercent;
   const summary = [
     `${Math.round(snapshot.current.temperatureC)}°C`,
-    snapshot.current.condition.toLowerCase(),
-    rain !== undefined ? `${rain}% rain probability today` : null,
+    describeWeatherCode(snapshot.current.weatherCode, lang).toLowerCase(),
+    rain !== undefined
+      ? lang === "hi"
+        ? `आज ${rain}% बारिश की संभावना`
+        : `${rain}% rain probability today`
+      : null,
   ]
     .filter(Boolean)
     .join(", ");
@@ -88,8 +95,8 @@ export default function AssistantPage() {
   const [isTyping, setIsTyping] = useState(false);
 
   const weatherContext = useMemo(
-    () => (snapshot ? buildWeatherSummary(snapshot, profile) : null),
-    [snapshot, profile]
+    () => (snapshot ? buildWeatherSummary(snapshot, profile, lang) : null),
+    [snapshot, profile, lang]
   );
 
   const sendMessage = async (text: string) => {
@@ -261,7 +268,7 @@ export default function AssistantPage() {
                     <div className="flex items-center gap-2">
                       <DataSourceTag source={m.response.source} />
                       {m.showedFallbackNotice ? (
-                        <span className="text-[11px] text-loam-500">
+                        <span className="text-xs text-loam-500">
                           {t.assistantPage.fallbackShown}
                         </span>
                       ) : null}

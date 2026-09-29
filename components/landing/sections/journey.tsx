@@ -138,25 +138,27 @@ export function Journey() {
               key={stage.name}
               className={
                 pinned
-                  ? "flex w-[82vw] shrink-0 flex-col justify-between gap-6 border-l border-white/10 pl-8 first:border-l-0 first:pl-0 sm:w-[58vw] lg:w-[34rem] lg:pl-12"
-                  : "flex flex-col justify-between gap-5 border-t border-white/10 pt-8"
+                  ? "relative flex w-[82vw] shrink-0 flex-col justify-between gap-6 border-l border-white/10 pl-8 first:border-l-0 first:pl-0 sm:w-[58vw] lg:w-[34rem] lg:pl-12"
+                  : "relative flex flex-col justify-between gap-5 border-t border-white/10 pt-8"
               }
             >
-              <div>
-                <div className="flex items-baseline justify-between gap-6">
-                  <span
-                    aria-hidden
-                    className="font-display text-[5.5rem] font-semibold leading-[0.8] text-white/10 sm:text-[8rem]"
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-lime">
+              <div className="relative">
+                {/* Decorative number — absolutely positioned, behind text,
+                    never intercepts pointers (issue 12). */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -top-2 right-0 z-0 select-none font-display text-[5.5rem] font-semibold leading-[0.8] text-white/10 sm:text-[8rem]"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="relative z-10">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-lime">
                     {stage.capability}
                   </span>
+                  <h3 className="mt-4 font-display text-5xl font-semibold leading-[0.95] tracking-tight sm:text-7xl">
+                    {stage.name}
+                  </h3>
                 </div>
-                <h3 className="mt-4 font-display text-5xl font-semibold leading-[0.95] tracking-tight sm:text-7xl">
-                  {stage.name}
-                </h3>
                 <p className="mt-4 max-w-md text-sm leading-relaxed text-canopy-200 sm:text-base">
                   {stage.detail}
                 </p>

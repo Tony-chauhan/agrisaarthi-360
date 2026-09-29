@@ -17,8 +17,8 @@ import { useLanguage } from "@/lib/i18n/language-context";
 export function WeatherAction() {
   const { profile } = useFarmProfile();
   const { snapshot, status, refresh } = useWeather(profile.location);
-  const action = snapshot ? deriveFarmWeatherAction(snapshot, profile) : null;
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const action = snapshot ? deriveFarmWeatherAction(snapshot, profile, lang) : null;
   const L = t.landing;
 
   const metrics = snapshot
@@ -85,7 +85,7 @@ export function WeatherAction() {
             {/* WEATHER data */}
             <div className="rounded-2xl border border-canopy-200 bg-white shadow-card">
               <div className="flex items-center justify-between border-b border-canopy-100 px-6 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-loam-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-loam-500">
                   {L.weatherPanelLabel}
                 </p>
                 {snapshot ? (
@@ -118,7 +118,7 @@ export function WeatherAction() {
                     <ul className="mt-5 grid grid-cols-2 gap-3">
                       {metrics.slice(1).map(({ icon: Icon, label, value }) => (
                         <li key={label} className="rounded-xl bg-loam-50 px-3 py-2.5">
-                          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-loam-500">
+                          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-loam-500">
                             <Icon className="h-3.5 w-3.5 text-canopy-600" aria-hidden />
                             {label}
                           </span>
@@ -152,10 +152,10 @@ export function WeatherAction() {
             {/* FARM ACTION */}
             <div className="rounded-2xl bg-canopy-950 text-white shadow-deep">
               <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/50">
                   {L.actionPanelLabel}
                 </p>
-                <span className="source-tag border-lime/30 bg-lime/10 text-lime">
+            <span className="source-tag border-white/25 bg-white/10 text-white/80">
                   Decision Engine
                 </span>
               </div>
@@ -188,7 +188,7 @@ export function WeatherAction() {
         </Reveal>
 
         <Reveal delay={320}>
-          <div className="mt-10">
+          <div className="mt-4">
             <Link
               href="/weather"
               className="group inline-flex min-h-12 items-center gap-2 text-base font-semibold text-terracotta-700"

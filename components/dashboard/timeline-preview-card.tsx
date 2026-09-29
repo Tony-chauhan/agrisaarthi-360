@@ -36,7 +36,7 @@ export function TimelinePreviewCard() {
           </p>
         ) : (
           <>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-loam-500">
               {t.dashboard.timelineEventCount(eventCount)}
             </p>
             <ul className="flex flex-col gap-1.5">
@@ -49,7 +49,7 @@ export function TimelinePreviewCard() {
                     <span className="block truncate font-medium text-canopy-900">
                       {event.title}
                     </span>
-                    <span className="text-[11px] text-loam-500">
+                    <span className="text-xs text-loam-500">
                       {eventTypeLabel(event.eventType, lang)}
                     </span>
                   </span>
@@ -62,7 +62,7 @@ export function TimelinePreviewCard() {
               ))}
             </ul>
             {events.some((e) => e.verificationStatus === "local-verified" || e.verificationStatus === "blockchain-verified") ? (
-              <p className="flex items-center gap-1.5 text-[11px] text-canopy-700">
+              <p className="flex items-center gap-1.5 text-xs text-canopy-700">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
                 {t.dashboard.timelineVerifiedPresent}
               </p>

@@ -91,7 +91,7 @@ export function OperationsPreviewCard() {
                   t={t}
                 />
               </p>
-              <p className="mt-1 text-[11px] text-loam-500">
+              <p className="mt-1 text-xs text-loam-500">
                 {t.featureCards.opsAvailabilityNote}.
               </p>
             </div>

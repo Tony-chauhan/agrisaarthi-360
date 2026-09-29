@@ -3,11 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Sprout, Bot } from "lucide-react";
+import { Menu, X, Sprout } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { NAV_ITEMS } from "@/lib/nav-config";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { SidebarFarmCard } from "@/app/(app)/components/sidebar-farm-card";
 import { FarmSummaryStatusLine } from "@/app/(app)/components/farm-status-line";
 
@@ -39,7 +38,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
           <span className="block font-display text-base font-semibold tracking-tight text-white">
             AgriSaarthi <span className="text-lime">360</span>
           </span>
-          <span className="block text-[11px] font-medium uppercase tracking-[0.14em] text-white/50">
+          <span className="block text-xs font-medium tracking-[0.14em] text-white/50">
             {t.chrome.chainTagline}
           </span>
         </span>
@@ -111,7 +110,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <span>{text.label}</span>
               <span
                 className={cn(
-                  "text-[11px] leading-tight",
+                  "text-xs leading-tight",
                   active ? "text-white/60" : "text-white/35"
                 )}
               >
@@ -191,15 +190,8 @@ export function Topbar() {
       <div className="hidden items-center justify-between gap-4 px-8 py-3.5 lg:flex">
         <FarmSummaryStatusLine />
         <div className="flex items-center gap-3">
-          <LanguageSwitcher />
-          <Link
-            href="/assistant"
-            aria-label={t.chrome.askAssistantAria}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-ink px-4 text-sm font-medium text-white transition-colors hover:bg-canopy-900"
-          >
-            <Bot className="h-4 w-4 text-lime" aria-hidden />
-            {t.chrome.askAgriSaarthi}
-          </Link>
+          {/* Assistant entry stays with the floating AI FAB (persistent on
+              every workspace page); no duplicate header trigger (issue 7). */}
           <span className="inline-flex min-h-11 items-center rounded-xl border border-canopy-200 bg-white px-4 text-sm font-medium text-canopy-800">
             {t.chrome.farmWorkspace}
           </span>
@@ -242,7 +234,7 @@ export function MobileNav() {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-14 cursor-pointer flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
+              "flex min-h-14 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors",
               active ? "text-canopy-800" : "text-loam-500"
             )}
           >

@@ -66,7 +66,7 @@ export function DecisionEngine() {
         <Reveal delay={150}>
           <div className="rounded-2xl border border-canopy-200 bg-white shadow-lift">
             <div className="flex items-center justify-between border-b border-canopy-100 px-6 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-loam-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-loam-500">
                 {L.advisorPanelLabel}
               </p>
               <span className="source-tag border-canopy-200 bg-canopy-50 text-canopy-700">
@@ -79,7 +79,7 @@ export function DecisionEngine() {
               <ul aria-label={L.inputsAria} className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
                 {L.decisionEngine.inputs.map((input) => (
                   <li key={input.label}>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-loam-500">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-loam-500">
                       {input.label}
                     </p>
                     <p className="mt-0.5 font-display text-base font-semibold text-canopy-950">
@@ -97,7 +97,7 @@ export function DecisionEngine() {
 
               {/* Decision */}
               <div className="rounded-xl bg-emerald-ink px-5 py-5 text-white">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-lime">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lime">
                   {L.recommendationLabel}
                 </p>
                 <p className="mt-1 font-display text-3xl font-semibold tracking-tight">
@@ -109,14 +109,14 @@ export function DecisionEngine() {
               </div>
 
               {/* Decision basis */}
-              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-loam-500">
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-loam-500">
                 {L.decisionEngine.decisionBasisTitle}
               </p>
               <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={L.basisListAria}>
                 {L.decisionEngine.inputs.map((input) => (
                   <li
                     key={input.label}
-                    className="rounded-full border border-canopy-200 bg-canopy-50 px-2.5 py-1 text-[11px] font-medium text-canopy-700"
+                    className="rounded-full border border-canopy-200 bg-canopy-50 px-2.5 py-1 text-xs font-medium text-canopy-700"
                   >
                     {input.label}
                   </li>
@@ -124,7 +124,7 @@ export function DecisionEngine() {
               </ul>
             </div>
 
-            <p className="border-t border-canopy-100 px-6 py-3 text-[11px] text-loam-500">
+            <p className="border-t border-canopy-100 px-6 py-3 text-xs text-loam-500">
               {L.decisionEngine.sampleNote}
             </p>
           </div>

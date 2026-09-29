@@ -111,7 +111,7 @@ body {
 
 /* Data source badge strip — data-transparency requirement */
 .source-tag {
-  @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase;
+  @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium tracking-wide uppercase;
 }
 
 /* Subtle page-enter animation (purposeful, one per page) */
@@ -215,9 +215,10 @@ html.lenis body {
    Landing page (public marketing experience) utilities
    ============================================================ */
 
-/* Editorial metadata label above headings */
+/* Editorial metadata label above headings — sentence case per copy,
+   minimum 12px for legibility (was 11px). */
 .eyebrow {
-  @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-canopy-600;
+  @apply inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-canopy-600;
 }
 
 /* Preloader chain words (FARM→DECISION→…) — staggered fade-in */

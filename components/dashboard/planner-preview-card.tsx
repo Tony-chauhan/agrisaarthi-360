@@ -25,9 +25,9 @@ export function PlannerPreviewCard() {
   const { profile, isProfileEmpty } = useFarmProfile();
   const { tasks } = usePlanner();
   const { snapshot } = useWeather(profile.location);
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const weatherAction = snapshot
-    ? deriveFarmWeatherAction(snapshot, profile)
+    ? deriveFarmWeatherAction(snapshot, profile, lang)
     : null;
 
   const active = tasks.filter(

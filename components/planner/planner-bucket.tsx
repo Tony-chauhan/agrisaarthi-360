@@ -50,7 +50,7 @@ export function PlannerBucket({
       </div>
       {children}
       {bucketKey === "today" && tasks.length > 0 ? (
-        <p className="text-[11px] text-loam-400">
+        <p className="text-xs text-loam-400">
           {t.planner.timelineTip}
           <Link href="/timeline" className="font-medium text-terracotta-600 hover:underline">
             {t.planner.timelineTipLink}

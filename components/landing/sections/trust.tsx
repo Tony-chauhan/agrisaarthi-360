@@ -68,7 +68,7 @@ export function Trust() {
         <Reveal delay={160}>
           <div className="mt-12 flex flex-wrap items-start justify-between gap-8 rounded-2xl bg-emerald-ink px-6 py-8 text-white sm:px-10 sm:py-10">
             <div className="max-w-2xl">
-              <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-lime">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-lime">
                 <ShieldCheck className="h-4 w-4" aria-hidden />
                 {L.trust.recordsTitle}
               </span>

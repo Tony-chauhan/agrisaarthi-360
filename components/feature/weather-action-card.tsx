@@ -38,7 +38,7 @@ function ActionBlock({ action }: { action: FarmWeatherAction }) {
   const { t } = useLanguage();
   return (
     <div className="mt-4 rounded-xl border-l-4 border-terracotta-600 bg-terracotta-500/5 px-4 py-3.5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-terracotta-600">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-terracotta-600">
         {t.featureCards.actionBlockLabel}
       </p>
       <p className="mt-1 font-display text-base font-semibold text-canopy-950">
@@ -111,7 +111,7 @@ function WeatherBody({
             <p className="mt-1.5 text-lg font-semibold text-canopy-900">
               {value}
             </p>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-loam-500">
               {label}
             </p>
           </div>

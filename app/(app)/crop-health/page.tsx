@@ -459,7 +459,7 @@ export default function CropHealthPage() {
                   {t.cropHealth.addFollowUp}
                 </Button>
                 {analysis.isFallback ? (
-                  <p className="mt-1 text-[11px] text-loam-500">
+                  <p className="mt-1 text-xs text-loam-500">
                     {t.cropHealth.fallbackTaskNote}
                   </p>
                 ) : null}

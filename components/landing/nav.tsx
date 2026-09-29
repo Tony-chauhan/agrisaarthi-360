@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X, Sprout } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 /**
  * Refined premium navigation — translucent over the hero, solid surface
@@ -84,8 +85,10 @@ export function LandingNav() {
           ))}
         </ul>
 
-        {/* Desktop CTA */}
-        <div className="hidden shrink-0 md:block">
+        {/* Language + Desktop CTA — the language selector lives here and
+            only here; the workspace inherits the global language state. */}
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
+          <LanguageSwitcher variant="dark" />
           <Link
             href="/farm-profile"
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-terracotta-600 px-5 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-terracotta-700 hover:shadow-lift"
@@ -134,13 +137,16 @@ export function LandingNav() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/farm-profile"
-            onClick={() => setMenuOpen(false)}
-            className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-terracotta-600 px-4 text-sm font-semibold text-white"
-          >
-            {t.landing.addYourFarm}
-          </Link>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <LanguageSwitcher variant="dark" />
+            <Link
+              href="/farm-profile"
+              onClick={() => setMenuOpen(false)}
+              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl bg-terracotta-600 px-4 text-sm font-semibold text-white"
+            >
+              {t.landing.addYourFarm}
+            </Link>
+          </div>
         </div>
       ) : null}
     </header>

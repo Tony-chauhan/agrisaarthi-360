@@ -7,7 +7,30 @@ import type { CurrentWeather, ForecastDay } from "@/lib/weather/types";
  */
 
 /** WMO weather interpretation codes (0–99). */
-export function describeWeatherCode(code: number): string {
+/**
+ * WMO weather-code → human label. English default keeps every existing
+ * verification suite deterministic; `lang="hi"` returns the localized
+ * label from the dictionaries (snapshots keep the raw numeric code, so
+ * render sites can localize without touching the provider layer).
+ */
+export function describeWeatherCode(code: number, lang: "en" | "hi" = "en"): string {
+  if (lang === "hi") {
+    const labels = dict("hi").common.weatherConditions as Record<string, string>;
+    const key =
+      code === 0 || code === 1 || code === 2 || code === 3
+        ? String(code)
+        : (code === 45 || code === 48) ? "45"
+        : (code >= 51 && code <= 57) ? "51"
+        : (code >= 61 && code <= 65) ? "61"
+        : (code === 66 || code === 67) ? "66"
+        : (code >= 71 && code <= 77) ? "71"
+        : (code >= 80 && code <= 82) ? "80"
+        : (code === 85 || code === 86) ? "85"
+        : (code === 95) ? "95"
+        : (code === 96 || code === 99) ? "96"
+        : "mixed";
+    return labels[key] ?? labels.mixed;
+  }
   if (code === 0) return "Clear sky";
   if (code === 1) return "Mainly clear";
   if (code === 2) return "Partly cloudy";
@@ -24,6 +47,8 @@ export function describeWeatherCode(code: number): string {
   if (code === 96 || code === 99) return "Thunderstorm with hail";
   return "Mixed conditions";
 }
+
+import { t as dict } from "@/lib/i18n";
 
 /** Rainy WMO codes used by the action rules. */
 export function isRainyCode(code: number): boolean {

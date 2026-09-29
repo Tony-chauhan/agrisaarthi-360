@@ -284,7 +284,7 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
       </span>
 
       {isAnchored && network ? (
-        <span className="text-[11px] text-loam-600">
+        <span className="text-xs text-loam-600">
           {t.timeline.networkLabel}
           {network}
           {txHash ? (
@@ -298,7 +298,7 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
       ) : null}
 
       {note ? (
-        <span className="flex max-w-full items-start gap-1 text-[11px] text-loam-600">
+        <span className="flex max-w-full items-start gap-1 text-xs text-loam-600">
           <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
           <span className="break-words">{note}</span>
         </span>

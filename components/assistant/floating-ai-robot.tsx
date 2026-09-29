@@ -6,6 +6,7 @@ import { Bot, X, SendHorizontal, Maximize2, ListChecks, TriangleAlert, Sparkles 
 import { useFarmProfile } from "@/lib/farm-context";
 import { useWeather } from "@/lib/weather/use-weather";
 import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
+import { describeWeatherCode } from "@/lib/weather/weather-utils";
 import { buildAssistantContext } from "@/lib/assistant/assistant-context";
 import type { AssistantResponse } from "@/lib/assistant/types";
 import { usePlanner } from "@/lib/planner/task-store";
@@ -69,13 +70,17 @@ export function FloatingAiRobot() {
     () =>
       snapshot
         ? (() => {
-            const action = deriveFarmWeatherAction(snapshot, profile);
+            const action = deriveFarmWeatherAction(snapshot, profile, lang);
             const rain = snapshot.forecast[0]?.precipitationProbabilityPercent;
             return {
               summary: [
                 `${Math.round(snapshot.current.temperatureC)}°C`,
-                snapshot.current.condition.toLowerCase(),
-                rain !== undefined ? `${rain}% rain probability today` : null,
+                describeWeatherCode(snapshot.current.weatherCode, lang).toLowerCase(),
+                rain !== undefined
+                  ? lang === "hi"
+                    ? `आज ${rain}% बारिश की संभावना`
+                    : `${rain}% rain probability today`
+                  : null,
               ]
                 .filter(Boolean)
                 .join(", "),
@@ -85,7 +90,7 @@ export function FloatingAiRobot() {
             };
           })()
         : null,
-    [snapshot, profile]
+    [snapshot, profile, lang]
   );
 
   const send = useCallback(
@@ -169,7 +174,7 @@ export function FloatingAiRobot() {
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">AgriSaarthi AI</p>
-                <p className="truncate text-[11px] text-canopy-100/80">
+                <p className="truncate text-xs text-canopy-100/80">
                   {t.robot.connected}
                 </p>
               </div>
@@ -247,7 +252,7 @@ export function FloatingAiRobot() {
                                     {action}
                                   </span>
                                   {added ? (
-                                    <span className="shrink-0 text-[11px] font-medium text-sprout-600">
+                                    <span className="shrink-0 text-xs font-medium text-sprout-600">
                                       {t.robot.added}
                                     </span>
                                   ) : (
@@ -267,7 +272,7 @@ export function FloatingAiRobot() {
                                         });
                                         setAddedActions((prev) => new Set(prev).add(key));
                                       }}
-                                      className="shrink-0 cursor-pointer rounded-md border border-canopy-200 px-2 py-1 text-[11px] font-medium text-canopy-700 hover:bg-canopy-50"
+                                      className="shrink-0 cursor-pointer rounded-md border border-canopy-200 px-2 py-1 text-xs font-medium text-canopy-700 hover:bg-canopy-50"
                                       aria-label={t.robot.addToPlanAria(action)}
                                     >
                                       {t.robot.addToPlan}
@@ -281,7 +286,7 @@ export function FloatingAiRobot() {
                         <div className="flex items-center gap-2">
                           <DataSourceTag source={m.response.source} />
                           {m.response.caveat ? (
-                            <span className="flex items-start gap-1 text-[11px] text-harvest-600">
+                            <span className="flex items-start gap-1 text-xs text-harvest-600">
                               <TriangleAlert className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
                               {m.response.caveat}
                             </span>

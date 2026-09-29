@@ -109,7 +109,7 @@ export function Preloader() {
         <span className="block px-2 pb-1">{t.landing.preloader.brandLines[1]}</span>
       </p>
       {/* The product chain — the preloader's motif is the story itself */}
-      <p className="relative z-10 mt-4 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.22em] text-canopy-300">
+      <p className="relative z-10 mt-4 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-canopy-300">
         {chainWords.map((word, i) => (
           <span key={word} className="flex items-center gap-2">
             <span style={{ animationDelay: `${i * 140}ms` }} className="chain-word">
@@ -121,7 +121,7 @@ export function Preloader() {
           </span>
         ))}
       </p>
-      <p className="relative z-10 mt-3 text-[11px] font-medium uppercase tracking-[0.22em] text-canopy-300">
+      <p className="relative z-10 mt-3 text-xs font-medium uppercase tracking-[0.22em] text-canopy-300">
         {t.landing.preloader.subline}
       </p>
     </div>

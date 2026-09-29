@@ -37,8 +37,10 @@ export function CardTitle({
   className,
   ...rest
 }: HTMLAttributes<HTMLHeadingElement>) {
+  // Section heading inside a card — h2 keeps a logical H1→H2 hierarchy
+  // under each page's PageHeader <h1>; visual style is unchanged.
   return (
-    <h3
+    <h2
       className={cn(
         "font-display text-lg font-semibold tracking-tight text-canopy-900",
         className

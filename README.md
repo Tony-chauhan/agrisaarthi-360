@@ -717,7 +717,7 @@ existed at this point in time* — that anyone can re-check without trusting the
 
 | Team Member | Responsibility |
 |---|---|
-| **Tony Chauhan** | Team Leader · Product & Technical Direction |
+| **Dharmender Chauhan** | Team Leader · Product & Technical Direction |
 | **Rishita** | Team Member |
 | **Deepanshu** | Team Member |
 | **Ram Kumar** | Team Member |

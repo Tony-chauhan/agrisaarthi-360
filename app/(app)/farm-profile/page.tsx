@@ -137,13 +137,14 @@ export default function FarmProfilePage() {
         </Alert>
       ) : null}
 
-      {/* Sample farm shortcut — fill instantly; manual entry still works */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Sample farm shortcut — quiet utility row, never competing with
+          the primary Save action below. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <Button
           size="sm"
-          variant="secondary"
+          variant="ghost"
           onClick={loadSampleFarm}
-          leftIcon={<Sparkles className="h-4 w-4" aria-hidden />}
+          leftIcon={<Sparkles className="h-3.5 w-3.5" aria-hidden />}
         >
           Use Sample Farm
         </Button>
@@ -152,7 +153,7 @@ export default function FarmProfilePage() {
             size="sm"
             variant="ghost"
             onClick={handleResetSession}
-            leftIcon={<RotateCcw className="h-4 w-4" aria-hidden />}
+            leftIcon={<RotateCcw className="h-3.5 w-3.5" aria-hidden />}
           >
             Clear session
           </Button>
@@ -278,19 +279,7 @@ export default function FarmProfilePage() {
               ))}
             </Select>
           </Field>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>{t.farmProfile.cropTitle}</CardTitle>
-            <CardDescription>
-              {t.farmProfile.cropDescription}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
+          {/* Current crop — aligned to the two-column grid (issue 8) */}
           <Field
             label={t.farmProfile.cropLabel}
             htmlFor="selectedCrop"
@@ -306,8 +295,10 @@ export default function FarmProfilePage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Link href="/dashboard" className="sm:order-1">
+      {/* Actions — primary (Save) rightmost; DOM order = visual order,
+          so keyboard order and mobile stacking stay sensible. */}
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Link href="/dashboard" className="flex">
           <Button variant="secondary" className="w-full sm:w-auto">
             {t.farmProfile.cancel}
           </Button>
@@ -321,7 +312,7 @@ export default function FarmProfilePage() {
           {t.farmProfile.save}
         </Button>
         {saved ? (
-          <Link href="/crop-advisor" className="sm:order-2">
+          <Link href="/crop-advisor" className="flex">
             <Button variant="primary" className="w-full sm:w-auto">
               {t.farmProfile.continueToAdvisor}
               <ArrowRight className="h-4 w-4" aria-hidden />

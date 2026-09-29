@@ -53,7 +53,7 @@ function KpiCard({
       )}
     >
       <span className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-loam-500">
+        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-loam-500">
           <Icon className="h-4 w-4 text-canopy-600" aria-hidden />
           {title}
         </span>
@@ -84,9 +84,9 @@ export function KpiCards() {
   const { profile, latestHealthCheck } = useFarmProfile();
   const { tasks } = usePlanner();
   const { snapshot, status: weatherStatus } = useWeather(profile.location);
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
-  const weatherAction = snapshot ? deriveFarmWeatherAction(snapshot, profile) : null;
+  const weatherAction = snapshot ? deriveFarmWeatherAction(snapshot, profile, lang) : null;
 
   const topRecommendation = (() => {
     try {
@@ -119,7 +119,7 @@ export function KpiCards() {
           snapshot ? (
             <DataSourceTag source={snapshot.source} />
           ) : weatherStatus === "unavailable" ? (
-            <span className="text-[11px] font-medium text-harvest-600">{t.dashboard.kpiUnavailable}</span>
+            <span className="text-xs font-medium text-harvest-600">{t.dashboard.kpiUnavailable}</span>
           ) : null
         }
       >
@@ -189,7 +189,7 @@ export function KpiCards() {
             <KpiSub>
               {latestHealthCheck.possibleCondition} · {latestHealthCheck.likelihood}
             </KpiSub>
-            <span className="text-[11px] text-loam-500">
+            <span className="text-xs text-loam-500">
               {t.dashboard.kpiCheckedOn(
                 new Date(latestHealthCheck.analyzedAt).toLocaleDateString(undefined, {
                   month: "short",
