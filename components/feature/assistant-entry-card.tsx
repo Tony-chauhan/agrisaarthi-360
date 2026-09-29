@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { DataSourceTag } from "@/components/ui/badge";
 import { useFarmProfile } from "@/lib/farm-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * AssistantEntryCard — state-driven dashboard entry to the assistant.
@@ -22,11 +23,12 @@ const SUGGESTED_QUESTION = "What should I do today?";
 
 export function AssistantEntryCard() {
   const { profile, latestAssistantInteraction } = useFarmProfile();
+  const { t } = useLanguage();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ask AgriSaarthi</CardTitle>
+        <CardTitle>{t.dashboard.assistantEntryTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         {latestAssistantInteraction ? (
@@ -36,7 +38,7 @@ export function AssistantEntryCard() {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wide text-loam-500">
-                Latest question
+                {t.dashboard.assistantLatest}
               </p>
               <p className="mt-0.5 text-sm font-semibold text-canopy-900">
                 &ldquo;{latestAssistantInteraction.question}&rdquo;
@@ -48,7 +50,7 @@ export function AssistantEntryCard() {
                 <DataSourceTag source={latestAssistantInteraction.source} />
                 <span className="flex items-center gap-1 text-[11px] text-loam-500">
                   <CheckCircle2 className="h-3 w-3" aria-hidden />
-                  answered
+                  {t.dashboard.assistantAnswered}
                 </span>
               </div>
             </div>
@@ -60,8 +62,12 @@ export function AssistantEntryCard() {
             </div>
             <p className="text-sm leading-relaxed text-loam-700">
               {profile.selectedCrop
-                ? `I know your ${profile.farmSizeAcres}-acre ${profile.selectedCrop} farm in ${profile.location.split(",")[0]} — ask about irrigation, crop checks or operations.`
-                : "Ask about irrigation, crop checks or farm operations — answers use your farm context when available."}
+                ? t.dashboard.assistantKnownFarm(
+                    profile.farmSizeAcres,
+                    profile.selectedCrop,
+                    profile.location.split(",")[0],
+                  )
+                : t.dashboard.assistantGeneric}
             </p>
           </div>
         )}
@@ -71,18 +77,23 @@ export function AssistantEntryCard() {
               &ldquo;{SUGGESTED_QUESTION}&rdquo;
             </li>
             <li className="rounded-full border border-canopy-200 bg-canopy-50 px-3 py-1.5 text-xs font-medium text-canopy-800">
-              &ldquo;Is irrigation needed?&rdquo;
+              &ldquo;{t.dashboard.assistantSuggested1}&rdquo;
+            </li>
+            <li className="rounded-full border border-canopy-200 bg-canopy-50 px-3 py-1.5 text-xs font-medium text-canopy-800">
+              &ldquo;{t.dashboard.assistantSuggested2}&rdquo;
             </li>
           </ul>
         ) : null}
       </CardContent>
       <CardFooter>
-        <p className="text-xs text-loam-500">AI model — not expert advice</p>
+        <p className="text-xs text-loam-500">
+          {t.featureCards.notExpertAdvice}
+        </p>
         <Link
           href="/assistant"
           className="flex cursor-pointer items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
         >
-          Open assistant
+          {t.dashboard.assistantEntryOpen}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </CardFooter>

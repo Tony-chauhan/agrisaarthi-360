@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { FINAL_CTA } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
 import { Magnetic } from "../motion/magnetic";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * FINAL CTA — pure typography. The three-line statement is the visual;
@@ -13,6 +13,9 @@ import { Magnetic } from "../motion/magnetic";
  * photograph. One magnetic primary action; nothing competing.
  */
 export function FinalCta() {
+  const { t } = useLanguage();
+  const L = t.landing;
+
   return (
     <section
       aria-labelledby="final-cta-heading"
@@ -29,12 +32,12 @@ export function FinalCta() {
         <SplitText
           id="final-cta-heading"
           as="h2"
-          lines={FINAL_CTA.headlineLines}
+          lines={[...L.finalCta.headlineLines]}
           className="font-display text-5xl font-semibold leading-[1.02] tracking-tight text-white sm:text-7xl lg:text-8xl"
         />
         <Reveal delay={200}>
           <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-canopy-100/85 sm:text-lg">
-            {FINAL_CTA.support}
+            {L.finalCta.support}
           </p>
         </Reveal>
         <Reveal delay={300}>
@@ -44,7 +47,7 @@ export function FinalCta() {
                 href="/farm-profile"
                 className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-terracotta-600 px-8 text-base font-semibold text-white shadow-lift transition-all duration-200 hover:-translate-y-0.5 hover:bg-terracotta-700"
               >
-                {FINAL_CTA.primary}
+                {L.finalCta.primary}
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </Magnetic>
@@ -52,14 +55,12 @@ export function FinalCta() {
               href="/#journey"
               className="inline-flex min-h-14 items-center justify-center rounded-xl border border-white/35 px-7 text-base font-medium text-white transition-colors duration-200 hover:border-white hover:bg-white/10"
             >
-              {FINAL_CTA.secondary}
+              {L.finalCta.secondary}
             </Link>
           </div>
         </Reveal>
         <Reveal delay={380}>
-          <p className="mt-10 text-xs text-canopy-100/50">
-            Decision support — the farmer stays in control of every action.
-          </p>
+          <p className="mt-10 text-xs text-canopy-100/50">{L.finalCtaNote}</p>
         </Reveal>
       </div>
     </section>

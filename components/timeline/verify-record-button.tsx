@@ -12,6 +12,7 @@ import { useTimeline } from "@/lib/timeline/timeline-context";
 import { useFarmProfile } from "@/lib/farm-context";
 import type { TimelineEvent, VerificationStatus } from "@/lib/timeline/types";
 import { PROVENANCE_ELIGIBLE_EVENT_TYPES } from "@/lib/timeline/types";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * VerifyRecordButton — the PROOF actions for an eligible timeline event.
@@ -64,6 +65,7 @@ interface VerifyResponse {
 export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
   const { emitEvent, setVerificationStatus } = useTimeline();
   const { profile } = useFarmProfile();
+  const { t } = useLanguage();
   const [busy, setBusy] = useState<null | "create" | "anchor" | "verify">(null);
   const [note, setNote] = useState<string | null>(null);
   const [anchoringAvailable, setAnchoringAvailable] = useState(false);
@@ -105,7 +107,7 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
 
       if (!res.ok) {
         setVerificationStatus(event.entityId, "unavailable");
-        setNote("Record creation unavailable — the record was not created.");
+        setNote(t.timeline.createUnavailable);
         return;
       }
 
@@ -116,21 +118,19 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
         "local-verified",
         data.record.canonicalPayloadHash
       );
-      setNote(
-        `Record verified locally (hash ${data.record.canonicalPayloadHash.slice(0, 12)}…). Deterministic in-app verification — not a blockchain transaction.`
-      );
+      setNote(t.timeline.localVerifiedNote(data.record.canonicalPayloadHash));
 
       emitEvent({
         eventType: "PROVENANCE_VERIFIED",
-        title: `Record verified: ${event.title}`,
-        description: "Local verification completed for this farm event.",
+        title: t.timeline.localVerifiedEventTitle(event.title),
+        description: t.timeline.localVerifiedEventDescription,
         source: "rules-based",
         entityType: "record",
         entityId: data.record.canonicalPayloadHash,
       });
     } catch {
       setVerificationStatus(event.entityId, "unavailable");
-      setNote("Record creation unavailable — network error.");
+      setNote(t.timeline.createNetworkError);
     } finally {
       setBusy(null);
     }
@@ -154,10 +154,7 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
         // Failure path — restore local verification, show the reason.
         setVerificationStatus(event.entityId, "local-verified", recordHash);
         const body = (await res.json().catch(() => null)) as { message?: string } | null;
-        setNote(
-          body?.message ??
-            "Blockchain anchoring is unavailable. The record remains locally verified."
-        );
+        setNote(body?.message ?? t.timeline.anchoringUnavailable);
         return;
       }
 
@@ -166,26 +163,25 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
         setVerificationStatus(event.entityId, "blockchain-verified", recordHash);
         setNetwork(data.record.network);
         setTxHash(data.record.transactionHash);
-        setNote(
-          `Anchored on ${data.record.network}. Transaction ${data.record.transactionHash.slice(0, 14)}…`
-        );
+        setNote(t.timeline.anchoredNote(data.record.network, data.record.transactionHash));
         emitEvent({
           eventType: "PROVENANCE_VERIFIED",
-          title: `Blockchain anchor: ${event.title}`,
-          description: `Canonical hash anchored on ${data.record.network} (tx ${data.record.transactionHash.slice(0, 14)}…).`,
+          title: t.timeline.anchoredEventTitle(event.title),
+          description: t.timeline.anchoredEventDescription(
+            data.record.network,
+            data.record.transactionHash,
+          ),
           source: "rules-based",
           entityType: "record",
           entityId: data.record.canonicalPayloadHash,
         });
       } else {
         // Pending (broadcast but unconfirmed) — keep pending badge.
-        setNote("Anchor transaction submitted — awaiting confirmation.");
+        setNote(t.timeline.pendingNote);
       }
     } catch {
       setVerificationStatus(event.entityId, "local-verified", recordHash);
-      setNote(
-        "Blockchain anchoring is unavailable. The record remains locally verified."
-      );
+      setNote(t.timeline.anchoringUnavailable);
     } finally {
       setBusy(null);
     }
@@ -202,7 +198,7 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
         `/api/provenance/${encodeURIComponent(recordHash)}/verify`
       );
       if (!res.ok) {
-        setNote("Verification could not be run right now.");
+        setNote(t.timeline.verifyUnavailable);
         return;
       }
       const data = (await res.json()) as VerifyResponse;
@@ -218,14 +214,14 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
         }
         setNote(
           data.result.source === "BLOCKCHAIN"
-            ? "Re-verified on-chain — the record hash is confirmed by the contract."
-            : "Re-verified locally — the record hash matches the registered hash."
+            ? t.timeline.reverifiedChain
+            : t.timeline.reverifiedLocal
         );
       } else {
         setNote(data.result.reason);
       }
     } catch {
-      setNote("Verification could not be run right now — network error.");
+      setNote(t.timeline.verifyNetworkError);
     } finally {
       setBusy(null);
     }
@@ -233,10 +229,10 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
 
   const busyLabel =
     busy === "create"
-      ? "Creating record…"
+      ? t.timeline.busyCreating
       : busy === "anchor"
-        ? "Anchoring…"
-        : "Verifying…";
+        ? t.timeline.busyAnchoring
+        : t.timeline.busyVerifying;
 
   if (busy) {
     return (
@@ -255,10 +251,10 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
             type="button"
             onClick={() => void createRecord()}
             className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg border border-canopy-300 px-3 text-sm font-medium text-canopy-800 transition-colors hover:bg-canopy-50"
-            aria-label={`Create verified record for: ${event.title}`}
+            aria-label={t.timeline.createRecordAria(event.title)}
           >
             <ShieldCheck className="h-4 w-4 text-canopy-600" aria-hidden />
-            Create Verified Record
+            {t.timeline.createRecord}
           </button>
         ) : null}
 
@@ -267,10 +263,10 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
             type="button"
             onClick={() => void anchorOnTestnet()}
             className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg border border-sprout-400/50 bg-sprout-400/10 px-3 text-sm font-medium text-canopy-800 transition-colors hover:bg-sprout-400/20"
-            aria-label={`Anchor the record for ${event.title} on the configured testnet`}
+            aria-label={t.timeline.anchorTestnetAria(event.title)}
           >
             <Link2 className="h-4 w-4 text-canopy-700" aria-hidden />
-            Anchor on Testnet
+            {t.timeline.anchorTestnet}
           </button>
         ) : null}
 
@@ -279,20 +275,22 @@ export function VerifyRecordButton({ event }: { event: TimelineEvent }) {
             type="button"
             onClick={() => void verifyAgain()}
             className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg border border-canopy-200 px-3 text-xs font-medium text-canopy-700 transition-colors hover:bg-canopy-50"
-            aria-label={`Verify the record for ${event.title} again`}
+            aria-label={t.timeline.verifyAgainAria(event.title)}
           >
             <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-            Verify Again
+            {t.timeline.verifyAgain}
           </button>
         ) : null}
       </span>
 
       {isAnchored && network ? (
         <span className="text-[11px] text-loam-600">
-          Network: {network}
+          {t.timeline.networkLabel}
+          {network}
           {txHash ? (
             <>
-              {" · "}Tx:{" "}
+              {" · "}
+              {t.timeline.txLabel}
               <span className="break-all font-mono">{txHash}</span>
             </>
           ) : null}

@@ -5,6 +5,7 @@ import { ArrowRight, CheckCircle2, ClipboardList } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useFarmProfile } from "@/lib/farm-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * Today's actions — a live, prioritized checklist derived from ACTUAL
@@ -23,9 +24,9 @@ interface ActionItem {
 }
 
 const PRIORITY_META = {
-  now: { label: "Now", tone: "danger" as const },
-  today: { label: "Today", tone: "warning" as const },
-  "this-week": { label: "This week", tone: "neutral" as const },
+  now: { tone: "danger" as const },
+  today: { tone: "warning" as const },
+  "this-week": { tone: "neutral" as const },
 };
 
 export function TodaysActionsCard() {
@@ -36,6 +37,7 @@ export function TodaysActionsCard() {
     latestOperation,
     latestAssistantInteraction,
   } = useFarmProfile();
+  const { t } = useLanguage();
 
   const actions: ActionItem[] = [];
 
@@ -43,10 +45,10 @@ export function TodaysActionsCard() {
   if (isProfileEmpty) {
     actions.push({
       id: "profile",
-      title: "Set up your farm profile",
-      detail: "Name, location and size unlock every other feature.",
+      title: t.dashboard.actionProfileTitle,
+      detail: t.dashboard.actionProfileDetail,
       href: "/farm-profile",
-      cta: "Start now",
+      cta: t.dashboard.actionProfileCta,
       priority: "now",
     });
   }
@@ -55,19 +57,19 @@ export function TodaysActionsCard() {
   if (!profile.selectedCrop) {
     actions.push({
       id: "crop",
-      title: "Choose what to grow",
-      detail: "Get transparent, rules-based crop suggestions for your land.",
+      title: t.dashboard.actionCropTitle,
+      detail: t.dashboard.actionCropDetail,
       href: "/crop-advisor",
-      cta: "Open advisor",
+      cta: t.dashboard.actionCropCta,
       priority: isProfileEmpty ? "this-week" : "now",
     });
   } else {
     actions.push({
       id: "crop-done",
-      title: `${profile.selectedCrop} selected`,
-      detail: "Advisor inputs are saved to your farm context.",
+      title: t.dashboard.actionCropDoneTitle(profile.selectedCrop),
+      detail: t.dashboard.actionCropDoneDetail,
       href: "/crop-advisor",
-      cta: "Review",
+      cta: t.dashboard.actionCropDoneCta,
       priority: "this-week",
     });
   }
@@ -75,12 +77,12 @@ export function TodaysActionsCard() {
   /* 3 — Weather check is cheap and always available. */
   actions.push({
     id: "weather",
-    title: "Review today's weather action",
+    title: t.dashboard.actionWeatherTitle,
     detail: profile.selectedCrop
-      ? `Conditions and cautions for your ${profile.selectedCrop.toLowerCase()}.`
-      : "Conditions and cautions for your farm location.",
+      ? t.dashboard.actionWeatherDetailCrop(profile.selectedCrop)
+      : t.dashboard.actionWeatherDetailGeneric,
     href: "/weather",
-    cta: "Check",
+    cta: t.dashboard.actionWeatherCta,
     priority: "today",
   });
 
@@ -88,10 +90,10 @@ export function TodaysActionsCard() {
   if (!latestHealthCheck) {
     actions.push({
       id: "health",
-      title: "Run a crop health check",
-      detail: "Upload a leaf photo for a cautious visual assessment.",
+      title: t.dashboard.actionHealthTitle,
+      detail: t.dashboard.actionHealthDetail,
       href: "/crop-health",
-      cta: "Check now",
+      cta: t.dashboard.actionHealthCta,
       priority: "today",
     });
   }
@@ -100,10 +102,10 @@ export function TodaysActionsCard() {
   if (!latestOperation) {
     actions.push({
       id: "operation",
-      title: "Plan a farm operation",
-      detail: "Find suitable machinery for sowing, spraying or harvesting.",
+      title: t.dashboard.actionOperationTitle,
+      detail: t.dashboard.actionOperationDetail,
       href: "/operations",
-      cta: "Plan",
+      cta: t.dashboard.actionOperationCta,
       priority: "this-week",
     });
   }
@@ -112,10 +114,10 @@ export function TodaysActionsCard() {
   if (!latestAssistantInteraction && !isProfileEmpty) {
     actions.push({
       id: "assistant",
-      title: "Ask AgriSaarthi about your farm",
-      detail: "Context-aware answers: \"What should I do today?\"",
+      title: t.dashboard.actionAssistantTitle,
+      detail: t.dashboard.actionAssistantDetail,
       href: "/assistant",
-      cta: "Ask",
+      cta: t.dashboard.actionAssistantCta,
       priority: "this-week",
     });
   }
@@ -124,10 +126,10 @@ export function TodaysActionsCard() {
   if (actions.length === 0) {
     actions.push({
       id: "all-set",
-      title: "You're all set",
-      detail: "Ask the assistant what to do next on your farm.",
+      title: t.dashboard.actionAllSetTitle,
+      detail: t.dashboard.actionAllSetDetail,
       href: "/assistant",
-      cta: "Ask AgriSaarthi",
+      cta: t.dashboard.actionAllSetCta,
       priority: "today",
     });
   }
@@ -135,8 +137,8 @@ export function TodaysActionsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Today&apos;s actions</CardTitle>
-        <Badge tone="accent">Your session checklist</Badge>
+        <CardTitle>{t.dashboard.todaysActions}</CardTitle>
+        <Badge tone="accent">{t.dashboard.sessionChecklist}</Badge>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {actions.map((action) => {
@@ -164,7 +166,13 @@ export function TodaysActionsCard() {
                     <span className="text-sm font-semibold text-canopy-900">
                       {action.title}
                     </span>
-                    <Badge tone={meta.tone}>{meta.label}</Badge>
+                    <Badge tone={meta.tone}>
+                      {action.priority === "now"
+                        ? t.common.now
+                        : action.priority === "today"
+                          ? t.common.today
+                          : t.common.thisWeek}
+                    </Badge>
                   </span>
                   <span className="mt-0.5 block text-sm text-loam-600">
                     {action.detail}

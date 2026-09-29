@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
-import { TRUST } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * PROOF & TRANSPARENCY — the page's honesty ledger. Five visible data
@@ -11,6 +13,9 @@ import { Reveal } from "../motion/reveal";
  * dark sections breathe on either side.
  */
 export function Trust() {
+  const { t } = useLanguage();
+  const L = t.landing;
+
   return (
     <section
       id="trust"
@@ -23,35 +28,37 @@ export function Trust() {
             <Reveal>
               <p className="eyebrow">
                 <span aria-hidden className="h-px w-8 bg-terracotta-600" />
-                {TRUST.eyebrow}
+                {L.trust.eyebrow}
               </p>
             </Reveal>
             <SplitText
               id="trust-heading"
               as="h2"
-              lines={TRUST.headlineLines}
+              lines={[...L.trust.headlineLines]}
               className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-tight text-canopy-950 sm:text-6xl lg:text-7xl"
             />
           </div>
           <Reveal delay={200}>
             <p className="max-w-md text-base leading-relaxed text-loam-700 sm:text-lg">
-              {TRUST.body}
+              {L.trust.body}
             </p>
           </Reveal>
         </div>
 
         {/* The five real sources */}
         <ul
-          aria-label="Data sources used by AgriSaarthi 360"
+          aria-label={L.sourcesAria}
           className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-canopy-200 bg-canopy-200 sm:grid-cols-2 lg:grid-cols-5"
         >
-          {TRUST.sources.map((source, i) => (
+          {L.trust.sources.map((source, i) => (
             <Reveal key={source.label} delay={i * 70} className="h-full">
               <li className="flex h-full flex-col gap-2 bg-white p-6">
                 <span className="source-tag self-start border-canopy-200 bg-canopy-50 text-canopy-700">
                   {source.label}
                 </span>
-                <p className="text-sm leading-relaxed text-loam-700">{source.body}</p>
+                <p className="text-sm leading-relaxed text-loam-700">
+                  {source.body}
+                </p>
               </li>
             </Reveal>
           ))}
@@ -63,17 +70,17 @@ export function Trust() {
             <div className="max-w-2xl">
               <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-lime">
                 <ShieldCheck className="h-4 w-4" aria-hidden />
-                {TRUST.recordsTitle}
+                {L.trust.recordsTitle}
               </span>
               <p className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">
-                {TRUST.recordsBody}
+                {L.trust.recordsBody}
               </p>
             </div>
             <Link
-              href={TRUST.recordsCta.href}
+              href="/timeline"
               className="group inline-flex min-h-12 items-center gap-2 self-center text-base font-semibold text-lime"
             >
-              {TRUST.recordsCta.label}
+              {L.trust.recordsCta}
               <ArrowRight
                 className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
                 aria-hidden

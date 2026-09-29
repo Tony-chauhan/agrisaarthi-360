@@ -3,6 +3,7 @@ import type {
   AssistantProviderResult,
   AssistantTopic,
 } from "./types";
+import type { Lang } from "@/lib/i18n/types";
 import { buildSystemInstruction } from "./system-instruction";
 
 /**
@@ -41,7 +42,8 @@ interface GeminiResponse {
 }
 
 export function createGeminiAssistantProvider(
-  apiKey: string
+  apiKey: string,
+  lang: Lang = "en"
 ): AssistantProvider {
   return {
     name: "gemini-assistant",
@@ -68,7 +70,7 @@ export function createGeminiAssistantProvider(
               systemInstruction: {
                 parts: [
                   {
-                    text: buildSystemInstruction(input.topic, input.context),
+                    text: buildSystemInstruction(input.topic, input.context, lang),
                   },
                 ],
               },

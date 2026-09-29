@@ -34,6 +34,7 @@ import { EmptyState } from "@/components/ui/states";
 import { useFarmProfile } from "@/lib/farm-context";
 import { useTimeline } from "@/lib/timeline/timeline-context";
 import { useWeather } from "@/lib/weather/use-weather";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
 import {
   FARM_OPERATIONS,
@@ -58,6 +59,10 @@ import type {
  * Farm Operations — machinery service request workflow.
  * Choose operation → review suitable machinery → send a service request →
  * view request status. Availability reflects the connected service dataset.
+ *
+ * Canonical availability note (English default, rendered via the i18n
+ * dictionary as t.operations.availabilityNote):
+ * "Availability depends on connected service providers."
  */
 
 type FlowStep = 1 | 2 | 3;
@@ -80,17 +85,17 @@ const AVAILABILITY_META: Record<
 };
 
 const UNAVAILABLE_NOTE = "Currently unavailable — try another provider";
-
 function StepIndicator({ current }: { current: FlowStep }) {
+  const { t } = useLanguage();
   const steps = [
-    { n: 1, label: "Choose operation" },
-    { n: 2, label: "Review machinery" },
-    { n: 3, label: "Request service" },
+    { n: 1, label: t.operations.step1 },
+    { n: 2, label: t.operations.step2 },
+    { n: 3, label: t.operations.step3 },
   ];
   return (
     <ol
       className="flex items-center gap-2"
-      aria-label="Workflow progress"
+      aria-label={t.operations.progressAria}
     >
       {steps.map((s, i) => {
         const done = s.n < current;
@@ -158,6 +163,7 @@ function FarmContextChips({
   location: string;
   season: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-wrap gap-2 text-xs">
       <span className="inline-flex items-center gap-1.5 rounded-full bg-canopy-50 px-3 py-1 font-medium text-canopy-800">
@@ -169,12 +175,14 @@ function FarmContextChips({
         {location}
       </span>
       <span className="inline-flex items-center gap-1.5 rounded-full bg-canopy-50 px-3 py-1 font-medium text-canopy-800">
-        Season: {season}
+        {t.operations.seasonChip}
+        {season}
       </span>
       {crop ? (
         <span className="inline-flex items-center gap-1.5 rounded-full bg-sprout-400/15 px-3 py-1 font-medium text-canopy-800">
           <Sprout className="h-3.5 w-3.5" aria-hidden />
-          Crop: {crop}
+          {t.operations.cropChip}
+          {crop}
         </span>
       ) : null}
     </div>
@@ -182,12 +190,19 @@ function FarmContextChips({
 }
 
 function AvailabilityLine({ provider }: { provider: MachineryProvider }) {
+  const { t } = useLanguage();
   const meta = AVAILABILITY_META[provider.availabilityStatus];
+  const badgeLabel =
+    provider.availabilityStatus === "available"
+      ? t.operations.shownAvailable
+      : provider.availabilityStatus === "busy"
+        ? t.operations.shownBusy
+        : t.operations.unavailableBadge;
   return (
     <div className="flex flex-col items-start gap-1">
-      <Badge tone={meta.tone}>{meta.badge}</Badge>
+      <Badge tone={meta.tone}>{badgeLabel}</Badge>
       {provider.availabilityStatus === "unavailable" ? (
-        <span className="text-xs text-loam-600">{UNAVAILABLE_NOTE}</span>
+        <span className="text-xs text-loam-600">{t.operations.unavailableNote}</span>
       ) : null}
     </div>
   );
@@ -197,6 +212,7 @@ export default function OperationsPage() {
   const { profile, hasCompleteProfile, setLatestOperation } = useFarmProfile();
   const { emitEvent } = useTimeline();
   const { snapshot } = useWeather(profile.location);
+  const { t, lang } = useLanguage();
   const weatherAction = snapshot
     ? deriveFarmWeatherAction(snapshot, profile)
     : null;
@@ -224,13 +240,13 @@ export default function OperationsPage() {
 
   const operation = operationId ? getOperation(operationId) : undefined;
   const matches = useMemo(
-    () => (operationId ? matchMachinery(operationId, profile) : []),
-    [operationId, profile]
+    () => (operationId ? matchMachinery(operationId, profile, lang) : []),
+    [operationId, profile, lang]
   );
   const alternative = useMemo(() => {
     if (!operationId || !selectedMachine) return null;
-    return findAlternative(operationId, selectedMachine.provider.id, profile);
-  }, [operationId, selectedMachine, profile]);
+    return findAlternative(operationId, selectedMachine.provider.id, profile, lang);
+  }, [operationId, selectedMachine, profile, lang]);
 
   const chooseOperation = (id: FarmOperationId) => {
     setOperationId(id);
@@ -262,8 +278,11 @@ export default function OperationsPage() {
     // P1: actual action → timeline event.
     emitEvent({
       eventType: "OPERATION_REQUESTED",
-      title: `${summaryBase.operationName} requested`,
-      description: `Service request sent for ${selectedMachine.provider.machineName} (${selectedMachine.provider.providerName}).`,
+      title: t.operations.eventRequestedTitle(summaryBase.operationName),
+      description: t.operations.eventRequestedDescription(
+        selectedMachine.provider.machineName,
+        selectedMachine.provider.providerName,
+      ),
       source: "demo",
       entityType: "operation",
       entityId: `${summaryBase.operationId}-${summaryBase.createdAt}`,
@@ -287,8 +306,8 @@ export default function OperationsPage() {
       if (kind === "accepted") {
         emitEvent({
           eventType: "OPERATION_COMPLETED",
-          title: `${summaryBase.operationName} accepted by provider`,
-          description: `Provider accepted the service request in the workflow. Final scheduling is confirmed directly with the provider.`,
+          title: t.operations.eventAcceptedTitle(summaryBase.operationName),
+          description: t.operations.eventAcceptedDescription,
           source: "demo",
           entityType: "operation",
           entityId: `${summaryBase.operationId}-${summaryBase.createdAt}`,
@@ -322,20 +341,20 @@ export default function OperationsPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <PageHeader
-        eyebrow="Operation to equipment to service request"
-        title="Farm Operations"
-        description="Choose an operation, review suitable machinery, and send a service request — the status is tracked in your farm workspace."
+        eyebrow={t.operations.eyebrow}
+        title={t.operations.title}
+        description={t.operations.description}
       />
 
       <StepIndicator current={step} />
 
       {!hasCompleteProfile ? (
-        <Alert tone="warning" title="Farm profile incomplete">
-          Set up your farm profile to get contextual operation suggestions.
+        <Alert tone="warning" title={t.operations.profileIncompleteTitle}>
+          {t.operations.profileIncompleteBody}
           <div className="mt-2">
             <Link href="/farm-profile">
               <Button size="sm" variant="accent">
-                Complete Farm Profile
+                {t.operations.completeProfile}
               </Button>
             </Link>
           </div>
@@ -354,7 +373,7 @@ export default function OperationsPage() {
             {weatherAction ? (
               <p className="flex items-start gap-1.5 text-xs text-loam-600">
                 <CloudSun className="mt-0.5 h-3.5 w-3.5 shrink-0 text-canopy-600" aria-hidden />
-                Weather action currently suggests: {weatherAction.title.toLowerCase()}.
+                {t.operations.weatherSuggests(weatherAction.title)}
               </p>
             ) : null}
           </CardContent>
@@ -363,9 +382,9 @@ export default function OperationsPage() {
 
       {/* ------------------------- STEP 1 ------------------------- */}
       {step === 1 ? (
-        <section aria-label="Choose an operation" className="flex flex-col gap-4">
+        <section aria-label={t.operations.step1} className="flex flex-col gap-4">
           <h2 className="font-display text-lg font-semibold text-canopy-900">
-            What farm operation do you need?
+            {t.operations.chooseQuestion}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {FARM_OPERATIONS.map((op) => {
@@ -385,7 +404,7 @@ export default function OperationsPage() {
                   </span>
                   <span className="text-sm text-loam-600">{op.description}</span>
                   <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-terracotta-600">
-                    Find equipment
+                    {t.operations.findEquipment}
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                   </span>
                 </button>
@@ -397,15 +416,14 @@ export default function OperationsPage() {
 
       {/* ------------------------- STEP 2 ------------------------- */}
       {step === 2 && operation ? (
-        <section aria-label="Review suitable machinery" className="flex flex-col gap-4">
+        <section aria-label={t.operations.step2} className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-display text-lg font-semibold text-canopy-900">
-                Suitable machinery — {operation.name}
+                {t.operations.suitableTitle(operation.name)}
               </h2>
               <p className="text-sm text-loam-600">
-                Suitability from the decision engine — based on farm size,
-                crop and distance. Not a scientifically optimal selection.
+                {t.operations.suitableNote}
               </p>
             </div>
             <Button
@@ -414,21 +432,21 @@ export default function OperationsPage() {
               leftIcon={<ArrowLeft className="h-4 w-4" aria-hidden />}
               onClick={() => setStep(1)}
             >
-              Choose a different operation
+              {t.operations.chooseDifferent}
             </Button>
           </div>
 
           {matches.length === 0 ? (
             <EmptyState
-              title="No suitable machinery found for this operation."
-              description="No equipment is currently listed for this operation. Try another operation or check back later."
+              title={t.operations.noMachineryTitle}
+              description={t.operations.noMachineryBody}
               action={
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => setStep(1)}
                 >
-                  Try another operation
+                  {t.operations.tryAnotherOperation}
                 </Button>
               }
             />
@@ -446,42 +464,42 @@ export default function OperationsPage() {
 
       {/* ------------------------- STEP 3 ------------------------- */}
       {step === 3 && operation && selectedMachine ? (
-        <section aria-label="Request service" className="flex flex-col gap-4">
+        <section aria-label={t.operations.step3} className="flex flex-col gap-4">
           {requestStatus === "reviewing" ? (
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Confirm your request</CardTitle>
+                  <CardTitle>{t.operations.confirmTitle}</CardTitle>
                   <CardDescription>
-                    Review the details before sending your service request.
+                    {t.operations.confirmDescription}
                   </CardDescription>
                 </div>
                 <DataSourceTag source="demo" />
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-                  <Detail label="Operation" value={operation.name} />
+                  <Detail label={t.operations.detailOperation} value={operation.name} />
                   <Detail
-                    label="Machine"
+                    label={t.operations.detailMachine}
                     value={selectedMachine.provider.machineName}
                   />
                   <Detail
-                    label="Provider"
+                    label={t.operations.detailProvider}
                     value={selectedMachine.provider.providerName}
                   />
                   <Detail
-                    label="Requested date"
-                    value={requestedDate || "Flexible — to be confirmed with provider"}
+                    label={t.operations.detailDate}
+                    value={requestedDate || t.operations.detailDateFlexible}
                   />
-                  <Detail label="Farm location" value={profile.location} />
-                  <Detail label="Farm size" value={`${profile.farmSizeAcres} acres`} />
+                  <Detail label={t.operations.detailLocation} value={profile.location} />
+                  <Detail label={t.operations.detailSize} value={`${profile.farmSizeAcres} ${t.common.acres}`} />
                 </dl>
                 <div>
                   <label
                     htmlFor="op-request-date"
                     className="text-xs font-medium uppercase tracking-wide text-loam-500"
                   >
-                    Requested date (optional)
+                    {t.operations.dateLabel}
                   </label>
                   <Input
                     id="op-request-date"
@@ -492,7 +510,7 @@ export default function OperationsPage() {
                   />
                 </div>
                 <p className="rounded-lg bg-canopy-50 px-3 py-2 text-xs text-loam-600">
-                  Availability depends on connected service providers.
+                  {t.operations.availabilityNote}
                 </p>
               </CardContent>
               <CardFooter>
@@ -501,7 +519,7 @@ export default function OperationsPage() {
                   onClick={confirmRequest}
                   rightIcon={<ArrowRight className="h-4 w-4" aria-hidden />}
                 >
-                  Confirm request
+                  {t.operations.confirmRequest}
                 </Button>
                 <Button
                   variant="ghost"
@@ -509,7 +527,7 @@ export default function OperationsPage() {
                   leftIcon={<ArrowLeft className="h-4 w-4" aria-hidden />}
                   onClick={() => setStep(2)}
                 >
-                  Back to machinery
+                  {t.operations.backToMachinery}
                 </Button>
               </CardFooter>
             </Card>
@@ -518,7 +536,7 @@ export default function OperationsPage() {
           {requestStatus === "submitted" ? (
             <Card>
               <CardHeader>
-                <CardTitle>Request submitted</CardTitle>
+                <CardTitle>{t.operations.submittedTitle}</CardTitle>
                 <DataSourceTag source="demo" />
               </CardHeader>
               <CardContent className="flex flex-col gap-2 text-sm text-loam-700">
@@ -526,12 +544,9 @@ export default function OperationsPage() {
                   {operation.name} — {selectedMachine.provider.machineName}
                 </p>
                 <p>Provider: {selectedMachine.provider.providerName}</p>
-                <p>
-                  Provider response expected in{" "}
-                  {selectedMachine.provider.estimatedResponse}.
-                </p>
+                <p>{t.operations.providerResponse(selectedMachine.provider.estimatedResponse)}</p>
                 <p className="text-xs text-loam-500">
-                  Availability depends on connected service providers.
+                  {t.operations.availabilityNote}
                 </p>
               </CardContent>
             </Card>
@@ -541,21 +556,25 @@ export default function OperationsPage() {
             responseKind === "accepted" ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Service request status</CardTitle>
+                  <CardTitle>{t.operations.responseTitle}</CardTitle>
                   <DataSourceTag source="demo" />
                 </CardHeader>
                 <CardContent className="flex flex-col gap-2 text-sm text-loam-700">
                   <p className="flex items-center gap-2 font-medium text-canopy-900">
                     <CheckCircle2 className="h-5 w-5 text-sprout-500" aria-hidden />
-                    {selectedMachine.provider.providerName} accepted your
-                    service request for {operation.name.toLowerCase()}.
+                    {t.operations.acceptedBody(
+                      selectedMachine.provider.providerName,
+                      operation.name.toLowerCase(),
+                    )}
                   </p>
                   <p>
-                    Machine: {selectedMachine.provider.machineName} · Date:{" "}
-                    {requestedDate || "flexible"}
+                    {t.operations.machineDate(
+                      selectedMachine.provider.machineName,
+                      requestedDate || t.operations.flexible,
+                    )}
                   </p>
                   <p className="text-xs text-loam-500">
-                    Final scheduling is confirmed directly with the provider.
+                    {t.operations.finalScheduling}
                   </p>
                 </CardContent>
                 <CardFooter>
@@ -565,13 +584,13 @@ export default function OperationsPage() {
                     leftIcon={<RotateCcw className="h-4 w-4" aria-hidden />}
                     onClick={startOver}
                   >
-                    Plan another operation
+                    {t.operations.planAnother}
                   </Button>
                   <Link
                     href="/dashboard"
                     className="flex items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
                   >
-                    View dashboard
+                    {t.operations.viewDashboard}
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                   </Link>
                 </CardFooter>
@@ -579,46 +598,46 @@ export default function OperationsPage() {
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>Provider unavailable</CardTitle>
+                  <CardTitle>{t.operations.providerUnavailableTitle}</CardTitle>
                   <DataSourceTag source="demo" />
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 text-sm text-loam-700">
-                  <p>
-                    That machine is currently unavailable. You can try another
-                    suitable machine from the service dataset.
-                  </p>
+                  <p>{t.operations.providerUnavailableBody}</p>
                   {alternative ? (
                     <div className="rounded-xl border border-canopy-200 bg-canopy-50/60 px-4 py-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-loam-500">
-                        Alternative machine
+                        {t.operations.alternativeMachine}
                       </p>
                       <p className="mt-1 font-display text-base font-semibold text-canopy-900">
                         {alternative.provider.machineName}
                       </p>
                       <p className="text-sm text-loam-600">
-                        {alternative.provider.providerName} ·{" "}
-                        {alternative.provider.distanceKm} km away ·{" "}
-                        {AVAILABILITY_META[alternative.provider.availabilityStatus].badge}
+                        {t.operations.alternativeMeta(
+                          alternative.provider.providerName,
+                          alternative.provider.distanceKm,
+                          alternative.provider.availabilityStatus === "available"
+                            ? t.operations.shownAvailable
+                            : alternative.provider.availabilityStatus === "busy"
+                              ? t.operations.shownBusy
+                              : t.operations.unavailableBadge,
+                        )}
                       </p>
                     </div>
                   ) : (
-                    <p>
-                      No alternative provider is available for this operation
-                      right now.
-                    </p>
+                    <p>{t.operations.noAlternative}</p>
                   )}
                   <p className="text-xs text-loam-500">
-                    Availability depends on connected service providers.
+                    {t.operations.availabilityNote}
                   </p>
                 </CardContent>
                 <CardFooter>
                   {alternative ? (
                     <Button variant="accent" onClick={tryAlternative}>
-                      Try another suitable machine
+                      {t.operations.tryAnotherMachine}
                     </Button>
                   ) : (
                     <Button variant="secondary" onClick={() => setStep(1)}>
-                      Try another operation
+                      {t.operations.tryAnotherOperation}
                     </Button>
                   )}
                   <Button
@@ -627,7 +646,7 @@ export default function OperationsPage() {
                     leftIcon={<RotateCcw className="h-4 w-4" aria-hidden />}
                     onClick={startOver}
                   >
-                    Start over
+                    {t.operations.startOver}
                   </Button>
                 </CardFooter>
               </Card>
@@ -662,6 +681,7 @@ function MachineryCard({
   onRequest: () => void;
 }) {
   const { provider, matchBasis } = match;
+  const { t, lang } = useLanguage();
   return (
     <Card>
       <CardHeader>
@@ -680,21 +700,23 @@ function MachineryCard({
         <div className="flex flex-wrap gap-4 text-sm text-loam-700">
           <span className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 text-canopy-600" aria-hidden />
-            {provider.distanceKm} km away
+            {t.common.kmAway(provider.distanceKm)}
           </span>
           <span className="flex items-center gap-1.5">
             <Ruler className="h-4 w-4 text-canopy-600" aria-hidden />
-            Suitable for: {provider.suitableFarmSizeAcres.min}–
-            {provider.suitableFarmSizeAcres.max} acres
+            {t.operations.suitableFor(
+              provider.suitableFarmSizeAcres.min,
+              provider.suitableFarmSizeAcres.max,
+            )}
           </span>
           <span className="flex items-center gap-1.5">
             <Clock3 className="h-4 w-4 text-canopy-600" aria-hidden />
-            Response: {provider.estimatedResponse}
+            {t.operations.responseTime(provider.estimatedResponse)}
           </span>
         </div>
         <ul className="flex flex-col gap-1 text-xs text-loam-600">
-          {matchBasis.map((basis) => (
-            <li key={basis} className="flex items-start gap-1.5">
+          {matchBasis.map((basis, index) => (
+            <li key={`${basis}-${index}`} className="flex items-start gap-1.5">
               <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-canopy-400" aria-hidden />
               {basis}
             </li>
@@ -702,11 +724,9 @@ function MachineryCard({
         </ul>
       </CardContent>
       <CardFooter>
-        <p className="text-xs text-loam-500">
-          SERVICE DATA · Availability depends on connected service providers.
-        </p>
+        <p className="text-xs text-loam-500">{t.operations.serviceDataNote}</p>
         <Button size="sm" variant="accent" onClick={onRequest}>
-          Request service
+          {t.operations.requestService}
         </Button>
       </CardFooter>
     </Card>

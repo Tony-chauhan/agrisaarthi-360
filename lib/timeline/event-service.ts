@@ -3,6 +3,8 @@ import type {
   TimelineEventInput,
   TimelineEventType,
 } from "@/lib/timeline/types";
+import type { Lang } from "@/lib/i18n/types";
+import { t as dict } from "@/lib/i18n";
 
 /**
  * TIMELINE EVENT SERVICE (P1.3)
@@ -112,8 +114,16 @@ export function canVerify(event: TimelineEvent): boolean {
   );
 }
 
-/** UI title for an event type (consistent across feed + previews). */
-export function eventTypeLabel(type: TimelineEventType): string {
+/**
+ * UI title for an event type (consistent across feed + previews).
+ * English remains the default (deterministic for verify suites); pass
+ * `lang` to render the localized label.
+ */
+export function eventTypeLabel(
+  type: TimelineEventType,
+  lang: Lang = "en"
+): string {
+  if (lang === "hi") return dict("hi").timeline.eventType[type];
   switch (type) {
     case "CROP_SELECTED":
       return "Crop selected";

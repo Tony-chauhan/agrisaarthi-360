@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isRateLimited, rateLimitedResponse } from "@/lib/rate-limit";
 import { runAnalysis } from "@/lib/crop-health/provider";
 import {
   ACCEPTED_IMAGE_MIME_TYPES,
@@ -64,6 +65,11 @@ function parseFarmContext(raw: unknown): AnalysisFarmContext {
 }
 
 export async function POST(request: NextRequest) {
+  // Per-IP abuse mitigation before any provider call (image cost guard).
+  if (isRateLimited(request, { max: 10 })) {
+    return rateLimitedResponse();
+  }
+
   let body: AnalysisRequestBody;
   try {
     body = (await request.json()) as AnalysisRequestBody;

@@ -8,6 +8,8 @@ import type {
   Season,
 } from "@/lib/types";
 import { CROP_KNOWLEDGE_BASE } from "@/lib/crop-knowledge";
+import type { Lang } from "@/lib/i18n/types";
+import { t as dict } from "@/lib/i18n";
 
 /**
  * CROP DECISION ENGINE — deterministic, transparent, rules-based.
@@ -23,6 +25,9 @@ import { CROP_KNOWLEDGE_BASE } from "@/lib/crop-knowledge";
  *
  * Same inputs always produce the same output (pure functions, no randomness).
  * The land photo is NEVER used for scoring — it is a context signal only.
+ *
+ * English is the deterministic default (verify suites assert English
+ * strings); pass `lang` to receive basis strings in the selected UI language.
  */
 
 export const SCORING_WEIGHTS = {
@@ -46,85 +51,155 @@ const MAX_RESULTS = 3;
 /* Dimension scorers (pure functions)                                  */
 /* ------------------------------------------------------------------ */
 
-function scoreSeason(entry: CropKnowledgeEntry, season: Season) {
+type BasisParams = {
+  entry: CropKnowledgeEntry;
+  L: ReturnType<typeof dict>["cropLib"] | null;
+};
+
+/** Localized crop name with safe fallback to the canonical English name. */
+function cropNameFor(L: BasisParams["L"], crop: string): string {
+  if (!L) return crop;
+  return (L.cropNames as Record<string, string>)[crop] ?? crop;
+}
+
+function scoreSeason(
+  entry: CropKnowledgeEntry,
+  season: Season,
+  L: BasisParams["L"],
+  lang: Lang
+) {
+  const seasonName = L
+    ? L.seasonNames[season]
+    : capitalize(season);
+  const cropName = cropNameFor(L, entry.crop);
   if (entry.seasons.includes(season)) {
     return {
       points: SCORING_WEIGHTS.season,
       max: SCORING_WEIGHTS.season,
-      basis: `${capitalize(season)} matches ${entry.crop}'s season profile.`,
+      basis: L
+        ? L.basis.seasonMatch(seasonName, cropName)
+        : `${capitalize(season)} matches ${entry.crop}'s season profile.`,
     };
   }
   return {
     points: 0,
-    max: SCORING_WEIGHTS.season,      basis: `${capitalize(season)} is outside ${entry.crop}'s season profile — needs local verification.`,
+    max: SCORING_WEIGHTS.season,
+    basis: L
+      ? L.basis.seasonMiss(seasonName, cropName)
+      : `${capitalize(season)} is outside ${entry.crop}'s season profile — needs local verification.`,
   };
 }
 
-function scoreSoil(entry: CropKnowledgeEntry, soil: SoilType) {
+function scoreSoil(
+  entry: CropKnowledgeEntry,
+  soil: SoilType,
+  L: BasisParams["L"]
+) {
+  const soilName = L ? L.soilNames[soil] : capitalize(soil);
+  const cropName = cropNameFor(L, entry.crop);
   if (entry.preferredSoils.includes(soil)) {
     return {
       points: SCORING_WEIGHTS.soil,
       max: SCORING_WEIGHTS.soil,
-      basis: `${capitalize(soil)} soil matches the configured rule set for ${entry.crop}.`,
+      basis: L
+        ? L.basis.soilMatch(soilName, cropName)
+        : `${capitalize(soil)} soil matches the configured rule set for ${entry.crop}.`,
     };
   }
   if (entry.toleratedSoils?.includes(soil)) {
     return {
       points: Math.round(SCORING_WEIGHTS.soil * 0.5),
       max: SCORING_WEIGHTS.soil,
-      basis: `${capitalize(soil)} soil is workable for ${entry.crop} (partial match).`,
+      basis: L
+        ? L.basis.soilPartial(soilName, cropName)
+        : `${capitalize(soil)} soil is workable for ${entry.crop} (partial match).`,
     };
   }
   return {
     points: 0,
-    max: SCORING_WEIGHTS.soil,      basis: `${capitalize(soil)} soil is not in ${entry.crop}'s preferred soil list.`,
+    max: SCORING_WEIGHTS.soil,
+    basis: L
+      ? L.basis.soilMiss(soilName, cropName)
+      : `${capitalize(soil)} soil is not in ${entry.crop}'s preferred soil list.`,
   };
 }
 
-function scoreIrrigation(entry: CropKnowledgeEntry, irrigation: IrrigationType) {
+function scoreIrrigation(
+  entry: CropKnowledgeEntry,
+  irrigation: IrrigationType,
+  L: BasisParams["L"]
+) {
+  const irrigationName = L ? L.irrigationNames[irrigation] : label(irrigation);
+  const cropName = cropNameFor(L, entry.crop);
+  const water = L ? L.waterWord[entry.waterRequirement] : entry.waterRequirement;
   if (entry.preferredIrrigation.includes(irrigation)) {
     return {
       points: SCORING_WEIGHTS.irrigation,
       max: SCORING_WEIGHTS.irrigation,
-      basis: `${label(irrigation)} irrigation supports ${entry.crop}'s ${entry.waterRequirement} water requirement.`,
+      basis: L
+        ? L.basis.irrigationMatch(irrigationName, cropName, water)
+        : `${label(irrigation)} irrigation supports ${entry.crop}'s ${entry.waterRequirement} water requirement.`,
     };
   }
   if (entry.toleratedIrrigation?.includes(irrigation)) {
     return {
       points: Math.round(SCORING_WEIGHTS.irrigation * 0.5),
       max: SCORING_WEIGHTS.irrigation,
-      basis: `${label(irrigation)} irrigation is workable for ${entry.crop} (partial match).`,
+      basis: L
+        ? L.basis.irrigationPartial(irrigationName, cropName)
+        : `${label(irrigation)} irrigation is workable for ${entry.crop} (partial match).`,
     };
   }
   return {
     points: 0,
-    max: SCORING_WEIGHTS.irrigation,      basis: `${label(irrigation)} irrigation is not in ${entry.crop}'s preferred irrigation list.`,
+    max: SCORING_WEIGHTS.irrigation,
+    basis: L
+      ? L.basis.irrigationMiss(irrigationName, cropName)
+      : `${label(irrigation)} irrigation is not in ${entry.crop}'s preferred irrigation list.`,
   };
 }
 
-function scoreLocation(entry: CropKnowledgeEntry, location: string) {
+function scoreLocation(
+  entry: CropKnowledgeEntry,
+  location: string,
+  L: BasisParams["L"]
+) {
   // No district-level agronomy is modeled. Be explicit about it.
   return {
     points: SCORING_WEIGHTS.location,
     max: SCORING_WEIGHTS.location,
-    basis: location.trim()
-      ? `Location "${location.trim()}" noted — regional agronomy is not modeled; verify locally.`
-      : "Insufficient location information — generic default applied.",
+    basis: L
+      ? location.trim()
+        ? L.basis.locationNoted(location.trim())
+        : L.basis.locationMissing
+      : location.trim()
+        ? `Location "${location.trim()}" noted — regional agronomy is not modeled; verify locally.`
+        : "Insufficient location information — generic default applied.",
   };
 }
 
-function scoreFarmSize(entry: CropKnowledgeEntry, size: number) {
+function scoreFarmSize(
+  entry: CropKnowledgeEntry,
+  size: number,
+  L: BasisParams["L"]
+) {
   const { min, max } = entry.farmSizeRange;
+  const cropName = cropNameFor(L, entry.crop);
   if (size >= min && size <= max) {
     return {
       points: SCORING_WEIGHTS.farmSize,
       max: SCORING_WEIGHTS.farmSize,
-      basis: `${size} acres fits the configured farm-size range for ${entry.crop}.`,
+      basis: L
+        ? L.basis.sizeMatch(size, cropName)
+        : `${size} acres fits the configured farm-size range for ${entry.crop}.`,
     };
   }
   return {
     points: 0,
-    max: SCORING_WEIGHTS.farmSize,      basis: `${size} acres is outside ${entry.crop}'s configured range (${min}–${max}).`,
+    max: SCORING_WEIGHTS.farmSize,
+    basis: L
+      ? L.basis.sizeMiss(size, cropName, min, max)
+      : `${size} acres is outside ${entry.crop}'s configured range (${min}–${max}).`,
   };
 }
 
@@ -132,11 +207,11 @@ function scoreFarmSize(entry: CropKnowledgeEntry, size: number) {
 /* Profile completeness                                                */
 /* ------------------------------------------------------------------ */
 
-function findMissingInputs(inputs: CropAdvisorInputs): string[] {
+function findMissingInputs(inputs: CropAdvisorInputs, L: BasisParams["L"]): string[] {
   const missing: string[] = [];
-  if (!inputs.location.trim()) missing.push("Location is missing.");
+  if (!inputs.location.trim()) missing.push(L ? L.missingLocation : "Location is missing.");
   if (!Number.isFinite(inputs.farmSizeAcres) || inputs.farmSizeAcres <= 0) {
-    missing.push("Valid farm size (> 0 acres) is missing.");
+    missing.push(L ? L.missingFarmSize : "Valid farm size (> 0 acres) is missing.");
   }
   return missing;
 }
@@ -150,9 +225,11 @@ function findMissingInputs(inputs: CropAdvisorInputs): string[] {
  * identical outputs. The land photo is intentionally ignored for scoring.
  */
 export function recommendCrops(
-  inputs: CropAdvisorInputs
+  inputs: CropAdvisorInputs,
+  lang: Lang = "en"
 ): CropRecommendationResult {
-  const missingInputs = findMissingInputs(inputs);
+  const L = lang === "hi" ? dict("hi").cropLib : null;
+  const missingInputs = findMissingInputs(inputs, L);
 
   if (missingInputs.length > 0) {
     return {
@@ -165,11 +242,11 @@ export function recommendCrops(
   const scored: EngineCropRecommendation[] = [];
 
   for (const entry of CROP_KNOWLEDGE_BASE) {
-    const season = scoreSeason(entry, inputs.season);
-    const soil = scoreSoil(entry, inputs.soilType);
-    const irrigation = scoreIrrigation(entry, inputs.irrigation);
-    const location = scoreLocation(entry, inputs.location);
-    const farmSize = scoreFarmSize(entry, inputs.farmSizeAcres);
+    const season = scoreSeason(entry, inputs.season, L, lang);
+    const soil = scoreSoil(entry, inputs.soilType, L);
+    const irrigation = scoreIrrigation(entry, inputs.irrigation, L);
+    const location = scoreLocation(entry, inputs.location, L);
+    const farmSize = scoreFarmSize(entry, inputs.farmSizeAcres, L);
 
     const score =
       season.points +

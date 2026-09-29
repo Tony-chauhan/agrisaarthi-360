@@ -1,4 +1,6 @@
 import type { AssistantContextPacket, AssistantTopic } from "./types";
+import type { Lang } from "@/lib/i18n/types";
+import { t as dict } from "@/lib/i18n";
 
 /**
  * CONTROLLED SYSTEM INSTRUCTION
@@ -115,10 +117,16 @@ export function renderContextPacket(
 
 export function buildSystemInstruction(
   topic: AssistantTopic,
-  context?: AssistantContextPacket
+  context?: AssistantContextPacket,
+  lang: Lang = "en"
 ): string {
   const topicFocus = TOPIC_FOCUS[topic];
   const contextBlock = context ? renderContextPacket(context) : "(no context supplied)";
+  /* When the UI language is Hindi, append the language directive so the
+     model answers in simple Indian Hindi. The English core rules stay
+     unchanged (deterministic, suite-asserted). */
+  const languageBlock =
+    lang === "hi" ? `\nLANGUAGE DIRECTIVE:\n${dict("hi").assistantLib.languageDirective}\n` : "";
   return [
     ASSISTANT_IDENTITY,
     "",
@@ -127,6 +135,7 @@ export function buildSystemInstruction(
     "",
     `CURRENT QUESTION CATEGORY: ${topic}`,
     topicFocus,
+    languageBlock,
     "",
     "CONTEXT PACKET SUPPLIED BY THE APPLICATION:",
     "{{CONTEXT}}",

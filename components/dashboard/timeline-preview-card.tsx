@@ -13,6 +13,7 @@ import {
 import { DataSourceTag } from "@/components/ui/badge";
 import { VerificationBadge } from "@/components/timeline/verification-badge";
 import { eventTypeLabel } from "@/lib/timeline/event-service";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * TimelinePreviewCard — dashboard entry to the Farm Timeline.
@@ -20,23 +21,23 @@ import { eventTypeLabel } from "@/lib/timeline/event-service";
  */
 export function TimelinePreviewCard() {
   const { events, eventCount } = useTimeline();
+  const { t, lang } = useLanguage();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Farm Timeline</CardTitle>
+        <CardTitle>{t.dashboard.timelineTitle}</CardTitle>
         <DataSourceTag source="rules-based" />
       </CardHeader>
       <CardContent className="flex flex-col gap-2.5">
         {events.length === 0 ? (
           <p className="text-sm text-loam-600">
-            Your farm actions will appear here as you use the app — crop
-            selection, weather actions, health checks, tasks and operations.
+            {t.dashboard.timelineEmpty}
           </p>
         ) : (
           <>
             <p className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
-              {eventCount} event{eventCount === 1 ? "" : "s"} this session
+              {t.dashboard.timelineEventCount(eventCount)}
             </p>
             <ul className="flex flex-col gap-1.5">
               {events.slice(0, 3).map((event) => (
@@ -49,7 +50,7 @@ export function TimelinePreviewCard() {
                       {event.title}
                     </span>
                     <span className="text-[11px] text-loam-500">
-                      {eventTypeLabel(event.eventType)}
+                      {eventTypeLabel(event.eventType, lang)}
                     </span>
                   </span>
                   {event.verificationStatus !== "unverified" ? (
@@ -63,7 +64,7 @@ export function TimelinePreviewCard() {
             {events.some((e) => e.verificationStatus === "local-verified" || e.verificationStatus === "blockchain-verified") ? (
               <p className="flex items-center gap-1.5 text-[11px] text-canopy-700">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-                Verified records present in your timeline.
+                {t.dashboard.timelineVerifiedPresent}
               </p>
             ) : null}
           </>
@@ -75,7 +76,7 @@ export function TimelinePreviewCard() {
           href="/timeline"
           className="flex cursor-pointer items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
         >
-          View timeline
+          {t.dashboard.timelineView}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </CardFooter>

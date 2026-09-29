@@ -8,12 +8,17 @@ import type {
   MachineType,
   ProviderResponseKind,
 } from "./types";
+import type { Lang } from "@/lib/i18n/types";
+import { t as dict } from "@/lib/i18n";
 
 /**
  * Deterministic machinery matching engine.
  * Same FarmProfile + operation → same machines, same ordering, every run.
  * No randomness, no network calls. Explanations are transparent heuristics
  * — this is decision-engine suitability, not scientific optimization.
+ *
+ * English is the deterministic default (verify suites assert it); pass
+ * `lang` to receive the match basis in the selected UI language.
  */
 
 /** Tiebreaker: stable sort by distance, then id — never by random chance. */
@@ -31,19 +36,29 @@ function compareByDistanceThenId(a: MachineMatch, b: MachineMatch): number {
  */
 export function matchMachinery(
   operation: FarmOperationId,
-  profile: FarmProfile | null
+  profile: FarmProfile | null,
+  lang: Lang = "en"
 ): MachineMatch[] {
   const farmSize = profile?.farmSizeAcres ?? 0;
+  const L = lang === "hi" ? dict("hi").operationsLib : null;
 
   const matches = MACHINERY_PROVIDERS.filter(
     (p) => p.operation === operation
   ).map<MachineMatch>((p) => {
     const basis: string[] = [];
+    const operationName = L
+      ? L.operationPhrases[operation]
+      : operationLabel(operation);
+    const machineType = L ? L.machineTypes[p.machineType] : machineTypeLabel(p.machineType);
 
     basis.push(
-      p.machineType === "combine-harvester"
-        ? `Suggested match — combine harvester suits ${operationLabel(operation)} on farms of this size.`
-        : `Suggested match — ${machineTypeLabel(p.machineType)} suits ${operationLabel(operation)}.`
+      L
+        ? p.machineType === "combine-harvester"
+          ? L.basis.suggestedCombine(operationName)
+          : L.basis.suggestedMachine(machineType, operationName)
+        : p.machineType === "combine-harvester"
+          ? `Suggested match — combine harvester suits ${operationLabel(operation)} on farms of this size.`
+          : `Suggested match — ${machineTypeLabel(p.machineType)} suits ${operationLabel(operation)}.`
     );
 
     if (
@@ -52,17 +67,23 @@ export function matchMachinery(
       farmSize <= p.suitableFarmSizeAcres.max
     ) {
       basis.push(
-        `Suitability — your ${farmSize} acres fit the ${p.suitableFarmSizeAcres.min}–${p.suitableFarmSizeAcres.max} acre range.`
+        L
+          ? L.basis.sizeInRange(farmSize, p.suitableFarmSizeAcres.min, p.suitableFarmSizeAcres.max)
+          : `Suitability — your ${farmSize} acres fit the ${p.suitableFarmSizeAcres.min}–${p.suitableFarmSizeAcres.max} acre range.`
       );
     } else if (farmSize > 0) {
       basis.push(
-        `Suitability — farm size outside the typical ${p.suitableFarmSizeAcres.min}–${p.suitableFarmSizeAcres.max} acre range.`
+        L
+          ? L.basis.sizeOutOfRange(farmSize, p.suitableFarmSizeAcres.min, p.suitableFarmSizeAcres.max)
+          : `Suitability — farm size outside the typical ${p.suitableFarmSizeAcres.min}–${p.suitableFarmSizeAcres.max} acre range.`
       );
     }
 
     if (profile?.selectedCrop) {
       basis.push(
-        `Suggested for your selected crop: ${profile.selectedCrop}.`
+        L
+          ? L.basis.cropSuggested(profile.selectedCrop)
+          : `Suggested for your selected crop: ${profile.selectedCrop}.`
       );
     }
 
@@ -81,9 +102,10 @@ export function matchMachinery(
 export function findAlternative(
   operation: FarmOperationId,
   excludeId: string,
-  profile: FarmProfile | null
+  profile: FarmProfile | null,
+  lang: Lang = "en"
 ): MachineMatch | null {
-  const matches = matchMachinery(operation, profile).filter(
+  const matches = matchMachinery(operation, profile, lang).filter(
     (m) => m.provider.id !== excludeId
   );
   return matches[0] ?? null;

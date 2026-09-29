@@ -16,6 +16,7 @@ import { SkeletonCard } from "@/components/ui/states";
 import { useWeather } from "@/lib/weather/use-weather";
 import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
 import { useFarmProfile } from "@/lib/farm-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import type { WeatherSnapshot } from "@/lib/weather/types";
 
 /* Accessible icon per WMO-style condition string */
@@ -33,25 +34,28 @@ function ConditionIcon({ condition }: { condition: string }) {
   return <CloudSun className="h-5 w-5" aria-hidden />;
 }
 
-function forecastDayLabel(isoDate: string, index: number): string {
-  if (index === 0) return "Today";
-  if (index === 1) return "Tomorrow";
-  const d = new Date(isoDate);
-  return d.toLocaleDateString(undefined, { weekday: "long" });
-}
-
 export default function WeatherPage() {
   const { profile } = useFarmProfile();
   const { snapshot, status, refresh } = useWeather(profile.location);
+  const { t, lang } = useLanguage();
 
   const loading = status === "idle" || status === "loading";
+
+  function forecastDayLabel(isoDate: string, index: number): string {
+    if (index === 0) return t.common.today;
+    if (index === 1) return t.common.tomorrow;
+    const d = new Date(isoDate);
+    return d.toLocaleDateString(lang === "hi" ? "hi-IN" : undefined, {
+      weekday: "long",
+    });
+  }
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <PageHeader
-        eyebrow="Weather is only useful when it becomes action"
-        title="Weather → Farm Action"
-        description="Live conditions from your farm location, translated into a cautious, decision-engine farming action."
+        eyebrow={t.weather.eyebrow}
+        title={t.weather.title}
+        description={t.weather.description}
       />
 
       {/* 1 + 2 + 3 — Location, current conditions, farm action */}
@@ -60,16 +64,13 @@ export default function WeatherPage() {
       ) : !snapshot ? (
         <Card>
           <CardHeader>
-            <CardTitle>Weather unavailable</CardTitle>
+            <CardTitle>{t.weather.unavailableTitle}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-start gap-3 text-sm text-loam-600">
-            <p>
-              Live weather is temporarily unavailable. Add your farm location
-              in the Farm Profile, then try again.
-            </p>
+            <p>{t.weather.unavailableBody}</p>
             <Button size="sm" variant="secondary" onClick={refresh}>
               <RefreshCw className="h-4 w-4" aria-hidden />
-              Retry
+              {t.common.retry}
             </Button>
           </CardContent>
         </Card>
@@ -77,17 +78,16 @@ export default function WeatherPage() {
         <>
           {snapshot.isFallback ? (
             <p className="rounded-xl bg-harvest-500/10 px-4 py-3 text-sm font-medium text-harvest-600">
-              Live weather is temporarily unavailable — showing fallback
-              values. Values stay fixed and predictable.
+              {t.weather.fallbackBanner}
             </p>
           ) : null}
 
           <Card>
             <CardHeader>
               <div>
-                <CardTitle>Current conditions</CardTitle>
+                <CardTitle>{t.weather.conditionsTitle}</CardTitle>
                 <CardDescription>
-                  Weather for {snapshot.location.name}
+                  {t.weather.weatherFor(snapshot.location.name)}
                   {snapshot.location.timezone
                     ? ` · ${snapshot.location.timezone}`
                     : ""}
@@ -101,7 +101,7 @@ export default function WeatherPage() {
                   onClick={refresh}
                   leftIcon={<RefreshCw className="h-4 w-4" aria-hidden />}
                 >
-                  Refresh weather
+                  {t.weather.refreshWeather}
                 </Button>
               </div>
             </CardHeader>
@@ -123,7 +123,7 @@ export default function WeatherPage() {
                 <dl className="grid flex-1 grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
                     <dt className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
-                      Feels like
+                      {t.weather.feelsLike}
                     </dt>
                     <dd className="mt-0.5 font-semibold text-canopy-900">
                       {snapshot.current.apparentTemperatureC !== undefined
@@ -133,7 +133,7 @@ export default function WeatherPage() {
                   </div>
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
                     <dt className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
-                      Humidity
+                      {t.weather.humidity}
                     </dt>
                     <dd className="mt-0.5 font-semibold text-canopy-900">
                       {snapshot.current.humidityPercent !== undefined
@@ -143,7 +143,7 @@ export default function WeatherPage() {
                   </div>
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
                     <dt className="text-[11px] font-medium uppercase tracking-wide text-loam-500">
-                      Precipitation
+                      {t.weather.precipitation}
                     </dt>
                     <dd className="mt-0.5 font-semibold text-canopy-900">
                       {snapshot.current.precipitationMm !== undefined
@@ -154,7 +154,7 @@ export default function WeatherPage() {
                   <div className="rounded-xl bg-loam-50 px-3 py-2.5">
                     <dt className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-loam-500">
                       <Wind className="h-3 w-3" aria-hidden />
-                      Wind
+                      {t.weather.wind}
                     </dt>
                     <dd className="mt-0.5 font-semibold text-canopy-900">
                       {Math.round(snapshot.current.windKmph)} km/h
@@ -165,16 +165,16 @@ export default function WeatherPage() {
 
               {/* Farm action — rules-based, the visual centerpiece */}
               {(() => {
-                const action = deriveFarmWeatherAction(snapshot, profile);
+                const action = deriveFarmWeatherAction(snapshot, profile, lang);
                 return (
                   <div className="mt-5 rounded-xl border-l-4 border-terracotta-600 bg-terracotta-500/5 px-5 py-4">
                     <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-terracotta-600">
-                      Farm action
-                      <Badge tone="accent">Decision engine</Badge>
+                      {t.weather.farmAction}
+                      <Badge tone="accent">{t.weather.decisionEngine}</Badge>
                       {action.priority === "caution" ? (
-                        <Badge tone="warning">Caution</Badge>
+                        <Badge tone="warning">{t.weather.caution}</Badge>
                       ) : (
-                        <Badge tone="neutral">Normal</Badge>
+                        <Badge tone="neutral">{t.weather.normal}</Badge>
                       )}
                     </p>
                     <p className="mt-2 font-display text-lg font-semibold text-canopy-950">
@@ -186,13 +186,13 @@ export default function WeatherPage() {
                     <dl className="mt-3 flex flex-col gap-1.5 text-sm">
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-wide text-loam-500">
-                          Why
+                          {t.weather.why}
                         </dt>
                         <dd className="text-loam-700">{action.reason}</dd>
                       </div>
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-wide text-loam-500">
-                          Recommendation
+                          {t.weather.recommendation}
                         </dt>
                         <dd className="text-loam-700">
                           {action.recommendation}
@@ -200,7 +200,7 @@ export default function WeatherPage() {
                       </div>
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-wide text-loam-500">
-                          Caveat
+                          {t.weather.caveat}
                         </dt>
                         <dd className="text-loam-700">{action.caveat}</dd>
                       </div>
@@ -215,11 +215,11 @@ export default function WeatherPage() {
           <Card>
             <CardHeader>
               <div>
-                <CardTitle>3-day outlook</CardTitle>
+                <CardTitle>{t.weather.outlookTitle}</CardTitle>
                 <CardDescription>
                   {snapshot.isFallback
-                    ? "Fallback forecast — fixed sample values"
-                    : "Live forecast — Open-Meteo"}
+                    ? t.weather.outlookFallback
+                    : t.weather.outlookLive}
                 </CardDescription>
               </div>
             </CardHeader>
@@ -267,10 +267,12 @@ export default function WeatherPage() {
             <CardFooter>
               <p className="text-xs text-loam-500">
                 {snapshot.isFallback
-                  ? "Weather fallback — fixed sample values"
-                  : `Live API — Open-Meteo · fetched ${new Date(snapshot.fetchedAt).toLocaleTimeString()}`}
-                {" · "}Action rules are configured thresholds, not agronomic
-                guarantees.
+                  ? t.featureCards.weatherFallbackFooter
+                  : t.weather.liveFetched(
+                      new Date(snapshot.fetchedAt).toLocaleTimeString(lang === "hi" ? "hi-IN" : undefined),
+                    )}
+                {" · "}
+                {t.weather.thresholdsNote}
               </p>
             </CardFooter>
           </Card>

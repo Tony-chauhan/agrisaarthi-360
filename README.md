@@ -575,14 +575,37 @@ npm start
 
 ---
 
+## Bilingual UI (English / हिन्दी)
+
+The entire UI ships in **English and Hindi**. English is the deterministic server-rendered
+default; the `English | हिन्दी` switcher (top bar, every app page) flips the language instantly
+with no reload, and the choice persists in `localStorage` (`agrisaarthi.lang`) after hydration.
+
+- **No i18n framework** — a fully typed dictionary lives in `lib/i18n/` (`en.ts` is the source of
+  truth; `hi.ts` is typed as `Dictionary`, so a missing Hindi key is a compile error).
+- **Engines are bilingual** — crop recommendation, weather actions, machine matching, the planner,
+  timeline event labels and the assistant all accept an optional `lang` parameter (default `"en"`,
+  which keeps every verification suite deterministic). The assistant's system instruction gains an
+  explicit "reply in Hindi" directive for Hindi UI sessions.
+- **What is *not* translated** — brand names, record hashes, transaction ids, URLs, API/model
+  identifiers and canonical source tags (`LIVE API`, `AI MODEL`, …) stay identical in both
+  languages.
+- **Parity is enforced** — `scripts/verify-localization.ts` fails the build when the two
+  dictionaries drift out of sync, and scans components for hardcoded English copy that bypasses
+  the dictionary.
+
+```bash
+npx tsx scripts/verify-localization.ts
+```
+
 ## Verification
 
-The repository ships **eight verification suites** (`scripts/verify-*.ts`) — assertion scripts that
+The repository ships **nine verification suites** (`scripts/verify-*.ts`) — assertion scripts that
 check engine determinism, threshold wording, fallback labeling, journey wiring, truthfulness of
 user-facing copy, and blockchain-provenance behavior:
 
 ```bash
-for s in crop-engine crop-health weather operations assistant golden-demo p1 provenance-blockchain; do
+for s in crop-engine crop-health weather operations assistant golden-demo p1 provenance-blockchain localization; do
   npx tsx scripts/verify-$s.ts
 done
 ```
@@ -597,6 +620,7 @@ done
 | `verify-golden-demo` | The end-to-end sample-farm journey (Wheat ranks first) |
 | `verify-p1` | Calendar, planner, timeline integrity, provenance round-trip, robot confirmation flow |
 | `verify-provenance-blockchain` | Blockchain provenance: canonical determinism, adapter selection, malformed-receipt rejection, no fabricated hashes, on-chain verification of the anchored hash, duplicate idempotency, failure fallback, secret isolation (mocked chain clients) |
+| `verify-localization` | EN↔HI dictionary key/shape parity, hardcoded-copy scan |
 
 Plus a **real testnet smoke test** — `npx tsx scripts/testnet-smoke.ts` — which submits an actual
 on-chain anchor transaction and verifies it, **only** when full testnet configuration is present

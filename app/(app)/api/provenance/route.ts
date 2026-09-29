@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isRateLimited, rateLimitedResponse } from "@/lib/rate-limit";
 import {
   createProvenanceRecord,
   provenanceCapabilities,
@@ -48,6 +49,11 @@ const ELIGIBLE: TimelineEventType[] = [
 ];
 
 export async function POST(request: NextRequest) {
+  // Per-IP abuse mitigation on record creation.
+  if (isRateLimited(request, { max: 20 })) {
+    return rateLimitedResponse();
+  }
+
   let body: unknown;
   try {
     body = await request.json();

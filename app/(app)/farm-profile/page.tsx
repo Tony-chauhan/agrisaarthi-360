@@ -16,34 +16,35 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { useFarmProfile } from "@/lib/farm-context";
 import { DEMO_PROFILE } from "@/lib/demo-data";
+import { useLanguage } from "@/lib/i18n/language-context";
 import type { FarmProfile, IrrigationType, SoilType, Season } from "@/lib/types";
 
 /* ------------------------------------------------------------------ */
 /* Options                                                             */
 /* ------------------------------------------------------------------ */
 
-const IRRIGATION_OPTIONS: Array<{ value: IrrigationType; label: string }> = [
-  { value: "rain-fed", label: "Rain-fed only" },
-  { value: "canal", label: "Canal" },
-  { value: "borewell", label: "Borewell" },
-  { value: "drip", label: "Drip" },
-  { value: "sprinkler", label: "Sprinkler" },
+const IRRIGATION_OPTIONS: Array<{ value: IrrigationType }> = [
+  { value: "rain-fed" },
+  { value: "canal" },
+  { value: "borewell" },
+  { value: "drip" },
+  { value: "sprinkler" },
 ];
 
-const SOIL_OPTIONS: Array<{ value: SoilType; label: string }> = [
-  { value: "black", label: "Black (cotton soil)" },
-  { value: "alluvial", label: "Alluvial" },
-  { value: "loamy", label: "Loamy" },
-  { value: "sandy", label: "Sandy" },
-  { value: "clay", label: "Clay" },
-  { value: "red", label: "Red soil" },
-  { value: "laterite", label: "Laterite" },
+const SOIL_OPTIONS: Array<{ value: SoilType }> = [
+  { value: "black" },
+  { value: "alluvial" },
+  { value: "loamy" },
+  { value: "sandy" },
+  { value: "clay" },
+  { value: "red" },
+  { value: "laterite" },
 ];
 
-const SEASON_OPTIONS: Array<{ value: Season; label: string }> = [
-  { value: "kharif", label: "Kharif (monsoon — Jun–Oct)" },
-  { value: "rabi", label: "Rabi (winter — Nov–Apr)" },
-  { value: "zaid", label: "Zaid (summer — Apr–Jun)" },
+const SEASON_OPTIONS: Array<{ value: Season }> = [
+  { value: "kharif" },
+  { value: "rabi" },
+  { value: "zaid" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -81,6 +82,7 @@ function validateProfile(draft: FarmProfile): FormErrors {
 export default function FarmProfilePage() {
   const { profile, updateProfile, resetSession, hasCompleteProfile } =
     useFarmProfile();
+  const { t } = useLanguage();
   const [draft, setDraft] = useState<FarmProfile>(profile);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saved, setSaved] = useState(false);
@@ -117,19 +119,19 @@ export default function FarmProfilePage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <PageHeader
-        eyebrow="Step 1 of your farm journey"
-        title="Farm profile"
-        description="This profile becomes the shared context for crop advice, weather actions, crop health and operations. Everything else builds on it."
+        eyebrow={t.farmProfile.eyebrow}
+        title={t.farmProfile.title}
+        description={t.farmProfile.description}
       />
 
       {saved ? (
-        <Alert tone="success" title="Profile saved">
-          Your farm context is updated across the app —{" "}
+        <Alert tone="success" title={t.farmProfile.savedTitle}>
+          {t.farmProfile.savedBody}{" "}
           <Link
             href="/crop-advisor"
             className="font-medium underline underline-offset-2"
           >
-            continue to Crop Advisor
+            {t.farmProfile.savedLink}
           </Link>
           .
         </Alert>
@@ -155,47 +157,44 @@ export default function FarmProfilePage() {
             Clear session
           </Button>
         ) : null}
-        <p className="text-xs text-loam-500">
-          Sample farm: Ramesh Patil, 5 acres, Nashik — or edit the form with
-          your own details.
-        </p>
+        <p className="text-xs text-loam-500">{t.farmProfile.sampleNote}</p>
       </div>
 
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Who farms this land</CardTitle>
-            <CardDescription>Used to personalise guidance.</CardDescription>
+            <CardTitle>{t.farmProfile.whoTitle}</CardTitle>
+            <CardDescription>{t.farmProfile.whoDescription}</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <Field
-            label="Farmer name"
+            label={t.farmProfile.farmerName}
             htmlFor="farmerName"
             required
             error={errors.farmerName}
-            hint="This name personalises your dashboard guidance."
+            hint={t.farmProfile.farmerNameHint}
           >
             <Input
               id="farmerName"
               value={draft.farmerName}
               onChange={(e) => set("farmerName", e.target.value)}
-              placeholder="e.g. Ramesh Patil"
+              placeholder={t.farmProfile.farmerNamePlaceholder}
               aria-invalid={Boolean(errors.farmerName)}
             />
           </Field>
           <Field
-            label="Location / district"
+            label={t.farmProfile.location}
             htmlFor="location"
             required
             error={errors.location}
-            hint="Village, district or region — used for weather and crops."
+            hint={t.farmProfile.locationHint}
           >
             <Input
               id="location"
               value={draft.location}
               onChange={(e) => set("location", e.target.value)}
-              placeholder="e.g. Nashik, Maharashtra"
+              placeholder={t.farmProfile.locationPlaceholder}
               aria-invalid={Boolean(errors.location)}
             />
           </Field>
@@ -205,19 +204,19 @@ export default function FarmProfilePage() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Land details</CardTitle>
+            <CardTitle>{t.farmProfile.landTitle}</CardTitle>
             <CardDescription>
-              Helps match crops, machines and water planning to your land.
+              {t.farmProfile.landDescription}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <Field
-            label="Farm size (acres)"
+            label={t.farmProfile.farmSize}
             htmlFor="farmSizeAcres"
             required
             error={errors.farmSizeAcres}
-            hint="In acres — used to shortlist suitable machines."
+            hint={t.farmProfile.farmSizeHint}
           >
             <Input
               id="farmSizeAcres"
@@ -231,9 +230,9 @@ export default function FarmProfilePage() {
             />
           </Field>
           <Field
-            label="Irrigation"
+            label={t.farmProfile.irrigation}
             htmlFor="irrigation"
-            hint="Affects crop water planning."
+            hint={t.farmProfile.irrigationHint}
           >
             <Select
               id="irrigation"
@@ -244,15 +243,15 @@ export default function FarmProfilePage() {
             >
               {IRRIGATION_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {t.farmProfile.irrigationOptions[o.value]}
                 </option>
               ))}
             </Select>
           </Field>
           <Field
-            label="Soil type"
+            label={t.farmProfile.soilType}
             htmlFor="soilType"
-            hint="A rough type is enough — refine it later if needed."
+            hint={t.farmProfile.soilTypeHint}
           >
             <Select
               id="soilType"
@@ -261,12 +260,12 @@ export default function FarmProfilePage() {
             >
               {SOIL_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {t.farmProfile.soilOptions[o.value]}
                 </option>
               ))}
             </Select>
           </Field>
-          <Field label="Season" htmlFor="season" hint="Kharif / Rabi / Zaid.">
+          <Field label={t.farmProfile.season} htmlFor="season" hint={t.farmProfile.seasonHint}>
             <Select
               id="season"
               value={draft.season}
@@ -274,7 +273,7 @@ export default function FarmProfilePage() {
             >
               {SEASON_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {t.farmProfile.seasonOptions[o.value]}
                 </option>
               ))}
             </Select>
@@ -285,23 +284,23 @@ export default function FarmProfilePage() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Current crop (optional)</CardTitle>
+            <CardTitle>{t.farmProfile.cropTitle}</CardTitle>
             <CardDescription>
-              You can also choose a crop later via the Crop Advisor.
+              {t.farmProfile.cropDescription}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <Field
-            label="What is currently growing?"
+            label={t.farmProfile.cropLabel}
             htmlFor="selectedCrop"
-            hint="Leave empty if undecided — the advisor will suggest options."
+            hint={t.farmProfile.cropHint}
           >
             <Input
               id="selectedCrop"
               value={draft.selectedCrop ?? ""}
               onChange={(e) => set("selectedCrop", e.target.value || undefined)}
-              placeholder="e.g. Wheat"
+              placeholder={t.farmProfile.cropPlaceholder}
             />
           </Field>
         </CardContent>
@@ -310,7 +309,7 @@ export default function FarmProfilePage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Link href="/dashboard" className="sm:order-1">
           <Button variant="secondary" className="w-full sm:w-auto">
-            Cancel
+            {t.farmProfile.cancel}
           </Button>
         </Link>
         <Button
@@ -319,12 +318,12 @@ export default function FarmProfilePage() {
           leftIcon={<Save className="h-4 w-4" aria-hidden />}
           onClick={handleSave}
         >
-          Save farm profile
+          {t.farmProfile.save}
         </Button>
         {saved ? (
           <Link href="/crop-advisor" className="sm:order-2">
             <Button variant="primary" className="w-full sm:w-auto">
-              Continue to Crop Advisor
+              {t.farmProfile.continueToAdvisor}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Button>
           </Link>

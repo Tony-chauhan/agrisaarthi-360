@@ -83,6 +83,8 @@ export interface AssistantContextPacket {
 export interface AssistantRequest {
   question: string;
   context: AssistantContextPacket;
+  /** UI language hint ("en" | "hi"); anything else is treated as English. */
+  uiLanguage?: string;
 }
 
 /** Compact latest-interaction summary for the Dashboard card. */

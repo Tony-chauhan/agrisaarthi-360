@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { CROP_HEALTH } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
 import { PHOTOS } from "../photography/manifest";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * CROP HEALTH — the page's second (and final) photographic moment,
@@ -14,7 +14,9 @@ import { PHOTOS } from "../photography/manifest";
  * product's deliberately conservative language.
  */
 export function CropHealth() {
-  const photo = PHOTOS[CROP_HEALTH.photoId];
+  const photo = PHOTOS["leafMacro"];
+  const { t } = useLanguage();
+  const L = t.landing;
 
   return (
     <section
@@ -36,7 +38,7 @@ export function CropHealth() {
               className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             />
             <span className="source-tag absolute left-4 top-4 border-white/30 bg-canopy-950/50 text-white backdrop-blur-sm">
-              {CROP_HEALTH.source}
+              {L.cropHealth.source}
             </span>
           </div>
         </Reveal>
@@ -46,24 +48,24 @@ export function CropHealth() {
           <Reveal>
             <p className="eyebrow">
               <span aria-hidden className="h-px w-8 bg-terracotta-600" />
-              {CROP_HEALTH.eyebrow}
+              {L.cropHealth.eyebrow}
             </p>
           </Reveal>
           <SplitText
             id="health-heading"
             as="h2"
-            lines={CROP_HEALTH.headlineLines}
+            lines={[...L.cropHealth.headlineLines]}
             className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-tight text-canopy-950 sm:text-6xl"
           />
           <Reveal delay={200}>
             <p className="mt-6 max-w-lg text-base leading-relaxed text-loam-700 sm:text-lg">
-              {CROP_HEALTH.body}
+              {L.cropHealth.body}
             </p>
           </Reveal>
 
           {/* Flow */}
-          <ol className="mt-10 flex flex-col border-l border-canopy-200 pl-7" aria-label="Crop health workflow">
-            {CROP_HEALTH.flow.map((item, i) => (
+          <ol className="mt-10 flex flex-col border-l border-canopy-200 pl-7" aria-label={L.healthFlowAria}>
+            {L.cropHealth.flow.map((item, i) => (
               <Reveal key={item.step} delay={i * 90}>
                 <li className="relative pb-7 last:pb-0">
                   <span
@@ -81,16 +83,16 @@ export function CropHealth() {
 
           <Reveal delay={280}>
             <p className="mt-8 max-w-lg rounded-xl bg-parchment px-4 py-3 text-xs leading-relaxed text-loam-700">
-              {CROP_HEALTH.caution}
+              {L.cropHealth.caution}
             </p>
           </Reveal>
 
           <Reveal delay={340}>
             <Link
-              href={CROP_HEALTH.cta.href}
+              href="/crop-health"
               className="group mt-8 inline-flex min-h-12 items-center gap-2 text-base font-semibold text-terracotta-700"
             >
-              {CROP_HEALTH.cta.label}
+              {L.cropHealth.cta}
               <ArrowRight
                 className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
                 aria-hidden

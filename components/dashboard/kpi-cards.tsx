@@ -14,6 +14,7 @@ import { useWeather } from "@/lib/weather/use-weather";
 import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
 import { recommendCrops } from "@/lib/crop-recommendation";
 import { DataSourceTag } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/cn";
 
 /**
@@ -83,6 +84,7 @@ export function KpiCards() {
   const { profile, latestHealthCheck } = useFarmProfile();
   const { tasks } = usePlanner();
   const { snapshot, status: weatherStatus } = useWeather(profile.location);
+  const { t } = useLanguage();
 
   const weatherAction = snapshot ? deriveFarmWeatherAction(snapshot, profile) : null;
 
@@ -111,13 +113,13 @@ export function KpiCards() {
       {/* WEATHER */}
       <KpiCard
         icon={CloudSun}
-        title="Weather"
+        title={t.dashboard.kpiWeather}
         href="/weather"
         source={
           snapshot ? (
             <DataSourceTag source={snapshot.source} />
           ) : weatherStatus === "unavailable" ? (
-            <span className="text-[11px] font-medium text-harvest-600">Unavailable</span>
+            <span className="text-[11px] font-medium text-harvest-600">{t.dashboard.kpiUnavailable}</span>
           ) : null
         }
       >
@@ -136,8 +138,8 @@ export function KpiCards() {
         ) : (
           <KpiSub>
             {weatherStatus === "unavailable"
-              ? "Weather unavailable right now."
-              : "Loading conditions…"}
+              ? t.dashboard.kpiWeatherUnavailable
+              : t.dashboard.kpiLoadingConditions}
           </KpiSub>
         )}
       </KpiCard>
@@ -145,7 +147,7 @@ export function KpiCards() {
       {/* CROP */}
       <KpiCard
         icon={Sprout}
-        title="Crop"
+        title={t.dashboard.kpiCrop}
         href="/crop-advisor"
         source={<DataSourceTag source="rules-based" />}
       >
@@ -153,19 +155,23 @@ export function KpiCards() {
           <>
             <KpiValue>{profile.selectedCrop}</KpiValue>
             <KpiSub>
-              {SEASON_LABEL[profile.season] ?? profile.season} season ·{" "}
-              {profile.soilType} soil
+              {t.dashboard.kpiSeasonSoil(
+                t.common.seasons[profile.season],
+                profile.soilType,
+              )}
             </KpiSub>
           </>
         ) : topRecommendation ? (
           <>
             <KpiValue>{topRecommendation.crop}</KpiValue>
-            <KpiSub>Recommended · {topRecommendation.suitability} suitability</KpiSub>
+            <KpiSub>
+              {t.dashboard.kpiRecommended(topRecommendation.suitability)}
+            </KpiSub>
           </>
         ) : (
           <>
             <KpiValue>—</KpiValue>
-            <KpiSub>No crop selected yet</KpiSub>
+            <KpiSub>{t.dashboard.kpiNoCropSelected}</KpiSub>
           </>
         )}
       </KpiCard>
@@ -173,7 +179,7 @@ export function KpiCards() {
       {/* CROP HEALTH */}
       <KpiCard
         icon={ScanHeart}
-        title="Crop Health"
+        title={t.dashboard.kpiCropHealth}
         href="/crop-health"
         source={latestHealthCheck ? <DataSourceTag source={latestHealthCheck.source} /> : null}
       >
@@ -184,17 +190,18 @@ export function KpiCards() {
               {latestHealthCheck.possibleCondition} · {latestHealthCheck.likelihood}
             </KpiSub>
             <span className="text-[11px] text-loam-500">
-              Checked{" "}
-              {new Date(latestHealthCheck.analyzedAt).toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-              })}
+              {t.dashboard.kpiCheckedOn(
+                new Date(latestHealthCheck.analyzedAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                }),
+              )}
             </span>
           </>
         ) : (
           <>
             <KpiValue>—</KpiValue>
-            <KpiSub>Not available yet — run a check in Crop Health.</KpiSub>
+            <KpiSub>{t.dashboard.kpiNotChecked}</KpiSub>
           </>
         )}
       </KpiCard>
@@ -202,25 +209,23 @@ export function KpiCards() {
       {/* TODAY'S PLAN */}
       <KpiCard
         icon={CalendarCheck}
-        title="Today's Plan"
+        title={t.dashboard.kpiTodayPlan}
         href="/planner"
         source={<DataSourceTag source="rules-based" />}
       >
         {tasks.length > 0 ? (
           <>
-            <KpiValue>
-              {dueToday.length} due · {completed.length} done
-            </KpiValue>
+            <KpiValue>{t.dashboard.kpiDueDone(dueToday.length, completed.length)}</KpiValue>
             {nextTask ? (
-              <KpiSub>Next: {nextTask.title}</KpiSub>
+              <KpiSub>{t.dashboard.kpiNextTask(nextTask.title)}</KpiSub>
             ) : (
-              <KpiSub>All clear for today.</KpiSub>
+              <KpiSub>{t.dashboard.kpiAllClear}</KpiSub>
             )}
           </>
         ) : (
           <>
             <KpiValue>—</KpiValue>
-            <KpiSub>Not available yet — generate your farm plan.</KpiSub>
+            <KpiSub>{t.dashboard.kpiGeneratePlan}</KpiSub>
           </>
         )}
       </KpiCard>

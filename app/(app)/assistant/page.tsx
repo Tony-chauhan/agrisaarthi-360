@@ -18,6 +18,7 @@ import { useFarmProfile } from "@/lib/farm-context";
 import { useWeather } from "@/lib/weather/use-weather";
 import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
 import { buildAssistantContext } from "@/lib/assistant/assistant-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import type { AssistantResponse } from "@/lib/assistant/types";
 import { cn } from "@/lib/cn";
 
@@ -36,10 +37,16 @@ interface ChatEntry {
   showedFallbackNotice?: boolean;
 }
 
-const SUGGESTED_QUESTIONS = [
+const SUGGESTED_QUESTIONS_EN = [
   "What should I do today?",
   "Is irrigation needed?",
   "What should I check in my crop?",
+];
+
+const SUGGESTED_QUESTIONS_HI = [
+  "आज मैं क्या करूं?",
+  "क्या सिंचाई ज़रूरी है?",
+  "मेरी फसल में क्या जांचूं?",
 ];
 
 function buildWeatherSummary(
@@ -74,6 +81,7 @@ export default function AssistantPage() {
     setLatestAssistantInteraction,
   } = useFarmProfile();
   const { snapshot } = useWeather(profile.location);
+  const { t, lang } = useLanguage();
 
   const [messages, setMessages] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState("");
@@ -107,7 +115,7 @@ export default function AssistantPage() {
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed, context }),
+        body: JSON.stringify({ question: trimmed, context, uiLanguage: lang }),
       });
 
       if (!res.ok) {
@@ -141,7 +149,7 @@ export default function AssistantPage() {
         {
           id: `a-${Date.now()}`,
           role: "assistant",
-          text: "AI assistant is temporarily unavailable. Showing fallback guidance.",
+          text: t.assistantPage.unavailable,
           showedFallbackNotice: true,
         },
       ]);
@@ -153,19 +161,18 @@ export default function AssistantPage() {
   return (
     <div className="mx-auto flex h-[calc(100vh-16rem)] min-h-[480px] max-w-3xl flex-col gap-6">
       <PageHeader
-        eyebrow="Contextual to your farm"
-        title="AgriSaarthi AI Assistant"
-        description="Your agriculture decision-support assistant, connected to your farm context."
+        eyebrow={t.assistantPage.eyebrow}
+        title={t.assistantPage.title}
+        description={t.assistantPage.description}
       />
 
       {!hasCompleteProfile ? (
-        <Alert tone="warning" title="Farm profile incomplete">
-          Set up your farm profile to get personalized guidance. General
-          agriculture questions still work.
+        <Alert tone="warning" title={t.assistantPage.profileIncompleteTitle}>
+          {t.assistantPage.profileIncompleteBody}
           <div className="mt-2">
             <Link href="/farm-profile">
               <Button size="sm" variant="accent">
-                Complete Farm Profile
+                {t.assistantPage.completeProfile}
               </Button>
             </Link>
           </div>
@@ -177,24 +184,31 @@ export default function AssistantPage() {
         <div className="flex flex-wrap items-center gap-2 border-b border-canopy-100 px-5 py-3">
           <p className="flex items-center gap-2 text-sm text-loam-600">
             <MessageCircleHeart className="h-4 w-4 text-canopy-600" aria-hidden />
-            Farm: {hasCompleteProfile ? profile.farmSizeAcres + " acres" : "not set"}
+            {t.assistantPage.farmLabel}
+            {hasCompleteProfile
+              ? `${profile.farmSizeAcres} ${t.common.acres}`
+              : t.assistantPage.notSet}
           </p>
           <span className="text-canopy-200" aria-hidden>
             ·
           </span>
           <p className="text-sm text-loam-600">
-            {hasCompleteProfile ? profile.location : "Location not set"}
+            {hasCompleteProfile ? profile.location : t.assistantPage.locationNotSet}
           </p>
           <span className="text-canopy-200" aria-hidden>
             ·
           </span>
           <p className="text-sm text-loam-600">
-            Crop: {profile.selectedCrop ?? "not selected"}
+            {t.assistantPage.cropLabel}
+            {profile.selectedCrop ?? t.assistantPage.notSelected}
           </p>
           <span className="text-canopy-200" aria-hidden>
             ·
           </span>
-          <p className="text-sm text-loam-600">Season: {profile.season}</p>
+          <p className="text-sm text-loam-600">
+            {t.assistantPage.seasonLabel}
+            {profile.season}
+          </p>
         </div>
 
         {/* Messages */}
@@ -202,7 +216,7 @@ export default function AssistantPage() {
           className="flex-1 overflow-y-auto px-5 py-4"
           role="log"
           aria-live="polite"
-          aria-label="Assistant conversation"
+          aria-label={t.assistantPage.conversationAria}
         >
           <ul className="flex flex-col gap-3">
             {messages.map((m) => (
@@ -248,8 +262,7 @@ export default function AssistantPage() {
                       <DataSourceTag source={m.response.source} />
                       {m.showedFallbackNotice ? (
                         <span className="text-[11px] text-loam-500">
-                          AI assistant is temporarily unavailable — fallback
-                          guidance shown.
+                          {t.assistantPage.fallbackShown}
                         </span>
                       ) : null}
                     </div>
@@ -260,7 +273,7 @@ export default function AssistantPage() {
             {isTyping ? (
               <li
                 className="flex items-center gap-2 self-start rounded-2xl bg-canopy-50 px-4 py-3"
-                aria-label="Assistant is typing"
+                aria-label={t.assistantPage.typingAria}
               >
                 <span className="flex items-center gap-1">
                   <span className="typing-dot h-2 w-2 rounded-full bg-canopy-600" />
@@ -268,7 +281,7 @@ export default function AssistantPage() {
                   <span className="typing-dot h-2 w-2 rounded-full bg-canopy-600" />
                 </span>
                 <span className="text-xs text-loam-600">
-                  AgriSaarthi is thinking…
+                  {t.assistantPage.thinking}
                 </span>
               </li>
             ) : null}
@@ -280,10 +293,10 @@ export default function AssistantPage() {
           <div className="border-t border-canopy-100 px-5 py-3">
             <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-loam-500">
               <Sparkles className="h-3.5 w-3.5 text-terracotta-600" aria-hidden />
-              Try asking
+              {t.assistantPage.tryAsking}
             </p>
             <ul className="flex flex-wrap gap-2">
-              {SUGGESTED_QUESTIONS.map((q) => (
+              {(lang === "hi" ? SUGGESTED_QUESTIONS_HI : SUGGESTED_QUESTIONS_EN).map((q) => (
                 <li key={q}>
                   <button
                     type="button"
@@ -308,13 +321,13 @@ export default function AssistantPage() {
           }}
         >
           <label htmlFor="assistant-input" className="sr-only">
-            Ask a question about your farm
+            {t.assistantPage.inputAria}
           </label>
           <input
             id="assistant-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g. Should I irrigate today?"
+            placeholder={t.assistantPage.inputPlaceholder}
             maxLength={500}
             className="h-11 flex-1 rounded-xl border border-canopy-200 bg-white px-3.5 text-base text-loam-900 placeholder:text-loam-400 transition-colors focus:border-canopy-500 focus:outline-none"
           />
@@ -324,24 +337,23 @@ export default function AssistantPage() {
             size="md"
             loading={isTyping}
             disabled={!input.trim()}
-            aria-label="Send message"
+            aria-label={t.assistantPage.sendAria}
           >
             {!isTyping && <SendHorizontal className="h-4 w-4" aria-hidden />}
-            <span className="hidden sm:inline">Send</span>
+            <span className="hidden sm:inline">{t.common.send}</span>
           </Button>
         </form>
       </div>
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-loam-500">
-          AI model — not a qualified agriculture professional. Chat is not
-          stored.
+          {t.assistantPage.footerNote}
         </p>
         <Link
           href="/dashboard"
           className="flex shrink-0 items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
         >
-          Back to dashboard
+          {t.assistantPage.backToDashboard}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { isRateLimited, rateLimitedResponse } from "@/lib/rate-limit";
 import { runAssistant } from "@/lib/assistant/provider";
 import { classifyQuestion } from "@/lib/assistant/topic-routing";
+import type { Lang } from "@/lib/i18n/types";
 import type {
   AssistantContextPacket,
   AssistantRequest,
@@ -82,6 +84,11 @@ function isValidContext(raw: unknown): raw is AssistantContextPacket {
 }
 
 export async function POST(request: Request) {
+  // Per-IP abuse mitigation before any provider call (LLM cost guard).
+  if (isRateLimited(request, { max: 10 })) {
+    return rateLimitedResponse();
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -122,10 +129,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // Optional UI language hint from the client ("en" default; invalid
+  // values silently fall back to English — never trusted beyond that).
+  const uiLang: Lang = parsed?.uiLanguage === "hi" ? "hi" : "en";
+
   // Deterministic server-side routing — client topic claims are ignored.
   const topic = classifyQuestion(question);
 
-  const response = await runAssistant({ question, topic, context: parsed.context });
+  const response = await runAssistant({
+    question,
+    topic,
+    context: parsed.context,
+    lang: uiLang,
+  });
 
   return NextResponse.json(response, { status: 200 });
 }

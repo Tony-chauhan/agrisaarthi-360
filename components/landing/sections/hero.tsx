@@ -3,13 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, MoveDown } from "lucide-react";
-import { HERO } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
 import { Magnetic } from "../motion/magnetic";
 import { Parallax } from "../motion/parallax";
 import { PHOTOS } from "../photography/manifest";
 import { useMotion } from "../motion/motion-provider";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * HERO — one cinematic photograph, editorial typography, and a quiet
@@ -18,8 +18,10 @@ import { useMotion } from "../motion/motion-provider";
  * product story using the app's labeled sample values.
  */
 export function Hero() {
-  const photo = PHOTOS[HERO.photoId];
+  const photo = PHOTOS["heroWheatSunrise"];
   const { reducedMotion } = useMotion();
+  const { t } = useLanguage();
+  const L = t.landing;
 
   return (
     <section
@@ -52,14 +54,14 @@ export function Hero() {
           <Reveal>
             <p className="eyebrow text-lime">
               <span aria-hidden className="h-px w-8 bg-lime" />
-              {HERO.eyebrow}
+              {L.hero.eyebrow}
             </p>
           </Reveal>
 
           <SplitText
             id="hero-heading"
             as="h1"
-            lines={HERO.headlineLines}
+            lines={[...L.hero.headlineLines]}
             playOn="load"
             stagger={0.16}
             className="mt-6 font-display text-[3.2rem] font-semibold leading-[0.98] tracking-tight text-white sm:text-7xl lg:text-[5.6rem]"
@@ -67,7 +69,7 @@ export function Hero() {
 
           <Reveal delay={320}>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-canopy-100/85">
-              {HERO.support}
+              {L.hero.support}
             </p>
           </Reveal>
 
@@ -78,7 +80,7 @@ export function Hero() {
                   href="/farm-profile"
                   className="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-terracotta-600 px-8 text-base font-semibold text-white shadow-lift transition-all duration-200 hover:-translate-y-0.5 hover:bg-terracotta-700"
                 >
-                  {HERO.primaryCta}
+                  {L.addYourFarm}
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </Magnetic>
@@ -86,14 +88,14 @@ export function Hero() {
                 href="#problem"
                 className="inline-flex min-h-14 items-center justify-center rounded-xl border border-white/35 px-7 text-base font-medium text-white transition-colors duration-200 hover:border-white hover:bg-white/10"
               >
-                {HERO.secondaryCta}
+                {L.exploreHow}
               </Link>
             </div>
           </Reveal>
 
           <Reveal delay={520}>
             <p className="mt-8 text-sm text-canopy-100/60">
-              AI-assisted decision support · Live weather · Farm operations
+              {L.hero.subline}
             </p>
           </Reveal>
         </div>
@@ -101,8 +103,8 @@ export function Hero() {
         {/* Editorial context flow — the product in three lines */}
         <Reveal delay={600} className="lg:justify-self-end">
           <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-canopy-950/45 p-6 backdrop-blur-sm">
-            <ol aria-label="Product flow — sample farm context" className="flex flex-col">
-              {HERO.contextFlow.map((row, i) => (
+            <ol aria-label={L.hero.contextFlowAria} className="flex flex-col">
+              {L.hero.contextFlow.map((row, i) => (
                 <li key={row.label} className="flex flex-col">
                   <div className="flex items-baseline gap-3 py-1.5">
                     <span
@@ -120,7 +122,7 @@ export function Hero() {
                       </span>
                     </span>
                   </div>
-                  {i < HERO.contextFlow.length - 1 ? (
+                  {i < L.hero.contextFlow.length - 1 ? (
                     <span aria-hidden className="flex items-center gap-2 pb-1 pl-6">
                       <span className="h-4 w-px bg-white/20" />
                       <MoveDown className="h-3 w-3 text-lime" />
@@ -130,7 +132,7 @@ export function Hero() {
               ))}
             </ol>
             <p className="mt-4 border-t border-white/10 pt-3 text-[11px] text-white/45">
-              {HERO.sampleNote}
+              {L.hero.sampleNote}
             </p>
           </div>
         </Reveal>
@@ -145,7 +147,7 @@ export function Hero() {
           {!reducedMotion ? (
             <ArrowDown className="motion-safe:animate-bounce h-4 w-4" aria-hidden />
           ) : null}
-          The problem
+          {L.hero.scrollCue}
         </Link>
       </div>
     </section>

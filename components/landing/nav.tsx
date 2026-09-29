@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, Sprout } from "lucide-react";
 import { cn } from "@/lib/cn";
-
-const NAV_LINKS = [
-  { label: "Product", href: "/#system" },
-  { label: "How It Works", href: "/#journey" },
-  { label: "Intelligence", href: "/#intelligence" },
-  { label: "About", href: "/#trust" },
-] as const;
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * Refined premium navigation — translucent over the hero, solid surface
@@ -18,8 +12,16 @@ const NAV_LINKS = [
  * authentication system exists and none is implied.
  */
 export function LandingNav() {
+  const { t } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const navLinks = [
+    { label: t.landing.navProduct, href: "/#system" },
+    { label: t.landing.navHow, href: "/#journey" },
+    { label: t.landing.navIntelligence, href: "/#intelligence" },
+    { label: t.landing.navAbout, href: "/#trust" },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -47,14 +49,14 @@ export function LandingNav() {
       )}
     >
       <nav
-        aria-label="Landing navigation"
+        aria-label={t.landing.navAria}
         className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
       >
         {/* Brand */}
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:outline-offset-4"
-          aria-label="AgriSaarthi 360 — home"
+          aria-label={t.landing.homeAria}
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-lime ring-1 ring-white/15">
             <Sprout className="h-5 w-5" aria-hidden />
@@ -66,7 +68,7 @@ export function LandingNav() {
 
         {/* Desktop links */}
         <ul className="hidden items-center gap-8 md:flex">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
@@ -88,7 +90,7 @@ export function LandingNav() {
             href="/farm-profile"
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-terracotta-600 px-5 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-terracotta-700 hover:shadow-lift"
           >
-            Add Your Farm
+            {t.landing.addYourFarm}
           </Link>
         </div>
 
@@ -99,7 +101,9 @@ export function LandingNav() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-expanded={menuOpen}
             aria-controls="landing-mobile-nav"
-            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              menuOpen ? t.landing.navMenuOpenAria : t.landing.navMenuClosedAria
+            }
             className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/20 text-white"
           >
             {menuOpen ? (
@@ -118,7 +122,7 @@ export function LandingNav() {
           className="border-t border-white/10 bg-canopy-950/95 px-4 pb-5 pt-2 backdrop-blur md:hidden"
         >
           <ul className="flex flex-col">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.href}>
                 <a
                   href={link.href}
@@ -135,7 +139,7 @@ export function LandingNav() {
             onClick={() => setMenuOpen(false)}
             className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-terracotta-600 px-4 text-sm font-semibold text-white"
           >
-            Add Your Farm
+            {t.landing.addYourFarm}
           </Link>
         </div>
       ) : null}

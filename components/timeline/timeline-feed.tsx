@@ -4,6 +4,7 @@ import { History } from "lucide-react";
 import { useTimeline } from "@/lib/timeline/timeline-context";
 import { TimelineEventRow } from "@/components/timeline/timeline-event-row";
 import { EmptyState } from "@/components/ui/states";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * TimelineFeed — chronological event feed (newest first).
@@ -12,12 +13,13 @@ import { EmptyState } from "@/components/ui/states";
  */
 export function TimelineFeed({ compact = false }: { compact?: boolean }) {
   const { events } = useTimeline();
+  const { t } = useLanguage();
 
   if (events.length === 0) {
     return (
       <EmptyState
-        title="No farm activity yet"
-        description="As you use the app — selecting a crop, checking weather, analyzing crop health, planning tasks and requesting operations — each action appears here in order."
+        title={t.timeline.emptyTitle}
+        description={t.timeline.emptyBody}
       />
     );
   }
@@ -25,13 +27,13 @@ export function TimelineFeed({ compact = false }: { compact?: boolean }) {
   const visible = compact ? events.slice(0, 3) : events;
 
   return (
-    <ol aria-label="Farm timeline — newest first" className="flex flex-col gap-2.5">
+    <ol aria-label={t.timeline.feedAria} className="flex flex-col gap-2.5">
       {visible.map((event) => (
         <TimelineEventRow key={event.eventId} event={event} />
       ))}
       {compact && events.length > 3 ? (
         <li className="text-center text-xs text-loam-500">
-          {events.length - 3} earlier event{events.length - 3 === 1 ? "" : "s"} this session
+          {t.timeline.earlierEvents(events.length - 3)}
         </li>
       ) : null}
     </ol>

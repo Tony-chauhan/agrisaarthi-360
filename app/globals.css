@@ -7,9 +7,9 @@
    ============================================================ */
 
 @theme {
-  /* Typography */
-  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  /* Typography — Noto Sans Devanagari covers Hindi glyphs (Fraunces/Instrument Sans are Latin-only) */
+  --font-sans: var(--font-instrument-sans), var(--font-noto-devanagari), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), var(--font-noto-devanagari), ui-serif, Georgia, serif;
 
   /* Canopy — deep agricultural green (primary brand) */
   --color-canopy-50: #f3f8f4;

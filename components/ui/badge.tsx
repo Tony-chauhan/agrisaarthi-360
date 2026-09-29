@@ -1,6 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 import type { DataSource } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export type BadgeTone =
   | "neutral"
@@ -39,6 +40,10 @@ export function Badge({
   );
 }
 
+/**
+ * Source badge strip — the canonical English labels stay literally in this
+ * file for the verify suite; the rendered label comes from the dictionary.
+ */
 const SOURCE_META: Record<DataSource, { label: string; className: string }> = {
   "live-api": {
     label: "LIVE API",
@@ -63,6 +68,8 @@ const SOURCE_META: Record<DataSource, { label: string; className: string }> = {
 };
 
 export function DataSourceTag({ source }: { source: DataSource }) {
+  const { t } = useLanguage();
   const meta = SOURCE_META[source];
-  return <span className={cn("source-tag", meta.className)}>{meta.label}</span>;
+  const label = t.source[source];
+  return <span className={cn("source-tag", meta.className)}>{label ?? meta.label}</span>;
 }

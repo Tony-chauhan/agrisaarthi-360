@@ -4,18 +4,21 @@ import { DataSourceTag } from "@/components/ui/badge";
 import { VerificationBadge } from "@/components/timeline/verification-badge";
 import { VerifyRecordButton } from "@/components/timeline/verify-record-button";
 import { eventTypeLabel } from "@/lib/timeline/event-service";
+import { useLanguage } from "@/lib/i18n/language-context";
 import type { TimelineEvent } from "@/lib/timeline/types";
 
 /**
  * TimelineEventRow — one feed entry: date/time, event, source, status.
  */
 export function TimelineEventRow({ event }: { event: TimelineEvent }) {
+  const { lang } = useLanguage();
   const when = new Date(event.timestamp);
-  const dateLabel = when.toLocaleDateString(undefined, {
+  const locale = lang === "hi" ? "hi-IN" : undefined;
+  const dateLabel = when.toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
   });
-  const timeLabel = when.toLocaleTimeString(undefined, {
+  const timeLabel = when.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -31,7 +34,7 @@ export function TimelineEventRow({ event }: { event: TimelineEvent }) {
       <p className="text-xs text-loam-600">{event.description}</p>
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-canopy-50 px-2 py-0.5 text-[11px] font-medium text-canopy-700">
-          {eventTypeLabel(event.eventType)}
+          {eventTypeLabel(event.eventType, lang)}
         </span>
         <DataSourceTag source={event.source} />
         <VerificationBadge status={event.verificationStatus} />

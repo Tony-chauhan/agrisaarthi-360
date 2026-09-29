@@ -19,6 +19,7 @@ import { Alert } from "@/components/ui/alert";
 import { CropResultCard } from "@/components/feature/crop-result-card";
 import { useFarmProfile } from "@/lib/farm-context";
 import { useTimeline } from "@/lib/timeline/timeline-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { recommendCrops } from "@/lib/crop-recommendation";
 import type {
   CropAdvisorInputs,
@@ -32,6 +33,7 @@ export default function CropAdvisorPage() {
   const { profile, updateProfile, setSelectedCrop, hasCompleteProfile } =
     useFarmProfile();
   const { emitEvent } = useTimeline();
+  const { t, lang } = useLanguage();
   const router = useRouter();
 
   /* Editable inputs — pre-filled from shared farm context */
@@ -79,7 +81,7 @@ export default function CropAdvisorPage() {
         irrigation,
         soilType,
       };
-      const outcome = recommendCrops(inputs);
+      const outcome = recommendCrops(inputs, lang);
 
       if (outcome.incompleteProfile) {
         setIncomplete(outcome.missingInputs);
@@ -106,8 +108,12 @@ export default function CropAdvisorPage() {
     // P1: actual action → timeline event.
     emitEvent({
       eventType: "CROP_SELECTED",
-      title: `${crop} selected`,
-      description: `Crop selected from the advisor for the ${season} season at ${location}.`,
+      title: t.cropAdvisor.eventSelectedTitle(crop),
+      description: t.cropAdvisor.eventSelectedDescription(
+        crop,
+        t.cropLib.seasonNames[season],
+        location,
+      ),
       source: "rules-based",
       entityType: "crop",
       entityId: crop,
@@ -118,41 +124,41 @@ export default function CropAdvisorPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <PageHeader
-        eyebrow="Step 2 of your farm journey"
-        title="Crop advisor"
-        description="Smart crop suggestions generated from your farm context — the reasoning is always shown, never hidden."
+        eyebrow={t.cropAdvisor.eyebrow}
+        title={t.cropAdvisor.title}
+        description={t.cropAdvisor.description}
       />
 
       {/* Inputs */}
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Your farm details</CardTitle>
+            <CardTitle>{t.cropAdvisor.detailsTitle}</CardTitle>
             <CardDescription>
-              Pre-filled from your farm profile — adjust for this season.
+              {t.cropAdvisor.detailsDescription}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field label="Location" htmlFor="ca-location" required>
+          <Field label={t.cropAdvisor.location} htmlFor="ca-location" required>
             <Input
               id="ca-location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
           </Field>
-          <Field label="Season" htmlFor="ca-season">
+          <Field label={t.cropAdvisor.season} htmlFor="ca-season">
             <Select
               id="ca-season"
               value={season}
               onChange={(e) => setSeason(e.target.value as Season)}
             >
-              <option value="kharif">Kharif (monsoon)</option>
-              <option value="rabi">Rabi (winter)</option>
-              <option value="zaid">Zaid (summer)</option>
+              <option value="kharif">{t.cropAdvisor.seasonOptions.kharif}</option>
+              <option value="rabi">{t.cropAdvisor.seasonOptions.rabi}</option>
+              <option value="zaid">{t.cropAdvisor.seasonOptions.zaid}</option>
             </Select>
           </Field>
-          <Field label="Farm size (acres)" htmlFor="ca-size">
+          <Field label={t.cropAdvisor.farmSize} htmlFor="ca-size">
             <Input
               id="ca-size"
               type="number"
@@ -162,40 +168,56 @@ export default function CropAdvisorPage() {
               onChange={(e) => setFarmSizeAcres(Number(e.target.value))}
             />
           </Field>
-          <Field label="Irrigation" htmlFor="ca-irrigation">
+          <Field label={t.cropAdvisor.irrigation} htmlFor="ca-irrigation">
             <Select
               id="ca-irrigation"
               value={irrigation}
               onChange={(e) => setIrrigation(e.target.value as IrrigationType)}
             >
-              <option value="rain-fed">Rain-fed only</option>
-              <option value="canal">Canal</option>
-              <option value="borewell">Borewell</option>
-              <option value="drip">Drip</option>
-              <option value="sprinkler">Sprinkler</option>
+              {(
+                [
+                  "rain-fed",
+                  "canal",
+                  "borewell",
+                  "drip",
+                  "sprinkler",
+                ] as IrrigationType[]
+              ).map((id) => (
+                <option key={id} value={id}>
+                  {t.cropLib.irrigationNames[id]}
+                </option>
+              ))}
             </Select>
           </Field>
-          <Field label="Soil type" htmlFor="ca-soil">
+          <Field label={t.cropAdvisor.soilType} htmlFor="ca-soil">
             <Select
               id="ca-soil"
               value={soilType}
               onChange={(e) => setSoilType(e.target.value as SoilType)}
             >
-              <option value="black">Black (cotton soil)</option>
-              <option value="alluvial">Alluvial</option>
-              <option value="loamy">Loamy</option>
-              <option value="sandy">Sandy</option>
-              <option value="clay">Clay</option>
-              <option value="red">Red soil</option>
-              <option value="laterite">Laterite</option>
+              {(
+                [
+                  "black",
+                  "alluvial",
+                  "loamy",
+                  "sandy",
+                  "clay",
+                  "red",
+                  "laterite",
+                ] as SoilType[]
+              ).map((id) => (
+                <option key={id} value={id}>
+                  {t.cropLib.soilNames[id]}
+                </option>
+              ))}
             </Select>
           </Field>
 
           {/* Land photo — context only */}
           <Field
-            label="Land photo (optional)"
+            label={t.cropAdvisor.landPhoto}
             htmlFor="ca-photo"
-            hint="Context signal only — never the sole basis for crop recommendation."
+            hint={t.cropAdvisor.landPhotoHint}
           >
             {landPhotoUrl ? (
               <div className="flex items-center gap-3 rounded-xl border border-canopy-200 bg-white p-2">
@@ -206,12 +228,12 @@ export default function CropAdvisorPage() {
                   className="h-16 w-24 rounded-lg border border-canopy-100 object-cover"
                 />
                 <span className="min-w-0 flex-1 truncate text-sm text-loam-700">
-                  {landPhotoName ?? "Selected image"}
+                  {landPhotoName ?? t.common.selectedImage}
                 </span>
                 <button
                   type="button"
                   onClick={removePhoto}
-                  aria-label="Remove land photo"
+                  aria-label={t.cropAdvisor.removePhoto}
                   className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-loam-500 transition-colors hover:bg-red-50 hover:text-red-600"
                 >
                   <X className="h-4 w-4" aria-hidden />
@@ -223,7 +245,7 @@ export default function CropAdvisorPage() {
                 className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-canopy-300 bg-canopy-50/50 px-3.5 text-sm text-loam-600 transition-colors hover:border-canopy-400"
               >
                 <ImageIcon className="h-4 w-4 text-canopy-600" aria-hidden />
-                Choose an image
+                {t.common.chooseImage}
               </label>
             )}
             <input
@@ -237,7 +259,7 @@ export default function CropAdvisorPage() {
         </CardContent>
         <CardFooter>
           <p className="text-xs text-loam-500">
-            Decision engine — the photo never affects scores.
+            {t.cropAdvisor.engineNote}
           </p>
           <Button
             variant="accent"
@@ -245,14 +267,14 @@ export default function CropAdvisorPage() {
             onClick={runAdvisor}
             leftIcon={<Sparkles className="h-4 w-4" aria-hidden />}
           >
-            {isFinding ? "Analyzing farm profile…" : "Find suitable crops"}
+            {isFinding ? t.cropAdvisor.analyzing : t.cropAdvisor.findCrops}
           </Button>
         </CardFooter>
       </Card>
 
       {/* Incomplete profile edge state */}
       {incomplete ? (
-        <Alert tone="warning" title="Not enough profile information for a reliable recommendation">
+        <Alert tone="warning" title={t.cropAdvisor.incompleteTitle}>
           <ul className="mt-1 list-inside list-disc">
             {incomplete.map((m) => (
               <li key={m}>{m}</li>
@@ -264,7 +286,7 @@ export default function CropAdvisorPage() {
               variant="secondary"
               onClick={() => router.push("/farm-profile")}
             >
-              Complete Farm Profile
+              {t.cropAdvisor.completeProfile}
             </Button>
           </div>
         </Alert>
@@ -272,12 +294,10 @@ export default function CropAdvisorPage() {
 
       {/* Results */}
       {results ? (
-        <section aria-label="Crop recommendations" className="flex flex-col gap-4">
+        <section aria-label={t.cropAdvisor.resultsAria} className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Alert tone="info" title="How to read these results" className="flex-1">
-              Rankings come from a transparent decision engine — decision
-              support, not scientific certainty. Confirm with your local
-              agriculture officer.
+            <Alert tone="info" title={t.cropAdvisor.howToReadTitle} className="flex-1">
+              {t.cropAdvisor.howToReadBody}
             </Alert>
           </div>
           <div className="flex justify-end">
@@ -285,7 +305,7 @@ export default function CropAdvisorPage() {
               href="/dashboard"
               className="flex items-center gap-1.5 text-sm font-medium text-terracotta-600 hover:underline"
             >
-              View dashboard
+              {t.cropAdvisor.viewDashboard}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </div>
@@ -297,12 +317,10 @@ export default function CropAdvisorPage() {
               </div>
               <div>
                 <p className="font-display text-lg font-semibold text-canopy-900">
-                  No crop met enough of the decision rules
+                  {t.cropAdvisor.noMatchTitle}
                 </p>
                 <p className="mx-auto mt-1 max-w-sm text-sm text-loam-600">
-                  For this season/soil/irrigation combination, no crop in the
-                  knowledge base scored strongly. Adjust the inputs or verify
-                  locally.
+                  {t.cropAdvisor.noMatchBody}
                 </p>
               </div>
             </div>
@@ -325,6 +343,7 @@ export default function CropAdvisorPage() {
 }
 
 function EmptyResults({ hasCompleteProfile }: { hasCompleteProfile: boolean }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-canopy-200 bg-white/60 px-6 py-12 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-canopy-50 text-canopy-600">
@@ -332,12 +351,12 @@ function EmptyResults({ hasCompleteProfile }: { hasCompleteProfile: boolean }) {
       </div>
       <div>
         <p className="font-display text-lg font-semibold text-canopy-900">
-          No recommendations yet
+          {t.cropAdvisor.emptyTitle}
         </p>
         <p className="mx-auto mt-1 max-w-sm text-sm text-loam-600">
           {hasCompleteProfile
-            ? 'Review your farm details above and choose "Find suitable crops" to see options with clear reasoning.'
-            : "Complete your farm profile first — the advisor uses it to generate matching crops."}
+            ? t.cropAdvisor.emptyComplete
+            : t.cropAdvisor.emptyIncomplete}
         </p>
       </div>
     </div>

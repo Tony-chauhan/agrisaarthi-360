@@ -2,6 +2,7 @@
 
 import { ShieldCheck, ShieldAlert, LoaderCircle, ShieldQuestion } from "lucide-react";
 import type { VerificationStatus } from "@/lib/timeline/types";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * VerificationBadge — mutually exclusive, icon+text (never color-only).
@@ -15,13 +16,14 @@ export function VerificationBadge({
 }: {
   status: VerificationStatus;
 }) {
+  const { t } = useLanguage();
   if (status === "unverified") return null;
 
   if (status === "blockchain-verified") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full border border-sprout-400/40 bg-sprout-400/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-canopy-700">
         <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-        Blockchain verified
+        {t.verification.blockchainVerified}
       </span>
     );
   }
@@ -30,7 +32,7 @@ export function VerificationBadge({
     return (
       <span className="inline-flex items-center gap-1 rounded-full border border-canopy-200 bg-canopy-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-canopy-700">
         <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-        Local verification
+        {t.verification.localVerified}
       </span>
     );
   }
@@ -39,7 +41,7 @@ export function VerificationBadge({
     return (
       <span className="inline-flex items-center gap-1 rounded-full border border-harvest-500/40 bg-harvest-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-harvest-600">
         <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden />
-        Blockchain pending
+        {t.verification.pending}
       </span>
     );
   }
@@ -47,7 +49,7 @@ export function VerificationBadge({
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-700">
       <ShieldAlert className="h-3.5 w-3.5" aria-hidden />
-      Blockchain unavailable
+      {t.verification.unavailable}
     </span>
   );
 }

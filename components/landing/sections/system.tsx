@@ -1,6 +1,8 @@
-import { SYSTEM } from "../copy";
+"use client";
+
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * THE CORE PRODUCT IDEA — the architecture, drawn as one connected
@@ -8,6 +10,9 @@ import { Reveal } from "../motion/reveal";
  * health → operation → plan. Typography and structure, not cards.
  */
 export function System() {
+  const { t } = useLanguage();
+  const L = t.landing;
+
   return (
     <section
       id="system"
@@ -20,25 +25,23 @@ export function System() {
           <Reveal>
             <p className="eyebrow text-lime">
               <span aria-hidden className="h-px w-8 bg-lime" />
-              {SYSTEM.eyebrow}
+              {L.system.eyebrow}
             </p>
           </Reveal>
           <SplitText
             id="system-heading"
             as="h2"
-            lines={SYSTEM.headlineLines}
+            lines={[...L.system.headlineLines]}
             className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl"
           />
           <Reveal delay={200}>
             <p className="mt-6 max-w-md text-base leading-relaxed text-canopy-100/80 sm:text-lg">
-              {SYSTEM.body}
+              {L.system.body}
             </p>
           </Reveal>
           <Reveal delay={300}>
             <p className="mt-10 border-l-2 border-lime pl-4 text-sm leading-relaxed text-canopy-100/70">
-              One profile. Every module reads the same context — so an answer
-              about irrigation already knows your soil, your season and your
-              crop.
+              {L.systemRailNote}
             </p>
           </Reveal>
         </div>
@@ -46,10 +49,10 @@ export function System() {
         {/* Connected system diagram */}
         <div>
           <ol
-            aria-label="The connected AgriSaarthi system"
+            aria-label={L.systemRailAria}
             className="relative flex flex-col border-l border-white/15 pl-8"
           >
-            {SYSTEM.nodes.map((node, i) => (
+            {L.system.nodes.map((node, i) => (
               <Reveal key={node.name} delay={i * 90}>
                 <li className="relative pb-10 last:pb-0">
                   <span
@@ -63,7 +66,7 @@ export function System() {
                     {node.name}
                   </p>
                   <p className="mt-1 text-sm text-canopy-100/60">{node.detail}</p>
-                  {i < SYSTEM.nodes.length - 1 ? (
+                  {i < L.system.nodes.length - 1 ? (
                     <span
                       aria-hidden
                       className="absolute -left-[2.1rem] top-8 h-[calc(100%-2rem)] w-px bg-white/10"

@@ -21,6 +21,9 @@ yarn-error.log*
 .env
 .env*.local
 
+# internal audit reports (never commit)
+PROJECT_AUDIT*.md
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

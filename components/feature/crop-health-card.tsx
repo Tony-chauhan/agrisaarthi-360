@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { DataSourceTag, Badge } from "@/components/ui/badge";
 import { useFarmProfile } from "@/lib/farm-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * Dashboard "Latest crop health check" — state-driven.
@@ -19,12 +20,13 @@ import { useFarmProfile } from "@/lib/farm-context";
  */
 export function CropHealthCard() {
   const { latestHealthCheck } = useFarmProfile();
+  const { t } = useLanguage();
 
   if (!latestHealthCheck) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Crop health</CardTitle>
+          <CardTitle>{t.featureCards.healthTitle}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-start gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-canopy-50 text-canopy-600">
@@ -32,21 +34,20 @@ export function CropHealthCard() {
           </div>
           <div>
             <p className="text-sm font-semibold text-canopy-900">
-              Run a crop health check
+              {t.featureCards.healthRunTitle}
             </p>
             <p className="mt-1 text-sm text-loam-600">
-              Upload a leaf photo for a cautious AI-assisted visual assessment
-              with safe fallback guidance.
+              {t.featureCards.healthRunBody}
             </p>
           </div>
         </CardContent>
         <CardFooter>
-          <p className="text-xs text-loam-500">Decision support, not a diagnosis</p>
+          <p className="text-xs text-loam-500">{t.featureCards.healthFooter}</p>
           <Link
             href="/crop-health"
             className="flex cursor-pointer items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
           >
-            Check now
+            {t.featureCards.healthCheckNow}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </CardFooter>
@@ -59,7 +60,7 @@ export function CropHealthCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Latest crop health check</CardTitle>
+        <CardTitle>{t.featureCards.healthLatestTitle}</CardTitle>
         <DataSourceTag source={summary.source} />
       </CardHeader>
       <CardContent>
@@ -76,10 +77,12 @@ export function CropHealthCard() {
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <Badge tone="warning">
-                Visual likelihood: {summary.likelihood}
+                {t.featureCards.healthLikelihood(summary.likelihood)}
               </Badge>
               {summary.isFallback ? (
-                <Badge tone="warning">Fallback guidance</Badge>
+                <Badge tone="warning">
+                  {t.featureCards.healthFallbackBadge}
+                </Badge>
               ) : null}
             </div>
             {summary.isFallback ? (
@@ -88,20 +91,19 @@ export function CropHealthCard() {
                   className="mt-0.5 h-3.5 w-3.5 shrink-0"
                   aria-hidden
                 />
-                Live model was unavailable — this is fallback guidance, not
-                an AI model result.
+                {t.featureCards.healthFallbackNote}
               </p>
             ) : null}
           </div>
         </div>
       </CardContent>
       <CardFooter>
-        <p className="text-xs text-loam-500">Decision support, not a diagnosis</p>
+        <p className="text-xs text-loam-500">{t.featureCards.healthFooter}</p>
         <Link
           href="/crop-health"
           className="flex cursor-pointer items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
         >
-          View analysis
+          {t.featureCards.healthViewAnalysis}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </CardFooter>

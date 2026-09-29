@@ -13,6 +13,7 @@ import {
 import { useFarmProfile } from "@/lib/farm-context";
 import { usePlanner } from "@/lib/planner/task-store";
 import { useWeather } from "@/lib/weather/use-weather";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * FARM SUMMARY HEADER — "Good morning, Ramesh" premium panel.
@@ -38,6 +39,7 @@ export function FarmSummaryHeader() {
     useFarmProfile();
   const { tasks } = usePlanner();
   const { snapshot } = useWeather(profile.location);
+  const { t } = useLanguage();
 
   /* Time-based greeting set after mount — keeps SSR and the first client
      render identical (no hydration mismatch), then personalizes. */
@@ -50,21 +52,20 @@ export function FarmSummaryHeader() {
     return (
       <section className="dashboard-enter rounded-2xl bg-emerald-ink px-6 py-8 shadow-deep sm:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-lime">
-          Welcome to AgriSaarthi 360
+          {t.dashboard.welcomeTitle}
         </p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-white">
-          One farm context. Every decision connected.
+          {t.dashboard.emptyHeadline}
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-white/75">
-          Create your farm profile once — crop advice, weather actions, crop
-          health and operations all build on it.
+          {t.dashboard.emptyBody}
         </p>
         <Link
           href="/farm-profile"
           className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-terracotta-600 px-5 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-terracotta-700"
         >
           <ClipboardList className="h-4 w-4" aria-hidden />
-          Set up your farm profile
+          {t.dashboard.setupProfile}
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </section>
@@ -72,6 +73,14 @@ export function FarmSummaryHeader() {
   }
 
   const firstName = profile.farmerName.split(" ")[0];
+  const greetingLabel =
+    greeting === "Good morning"
+      ? t.dashboard.greetingMorning
+      : greeting === "Good afternoon"
+        ? t.dashboard.greetingAfternoon
+        : greeting === "Good evening"
+          ? t.dashboard.greetingEvening
+          : t.dashboard.welcomeBack;
   const today = new Date().toISOString().slice(0, 10);
   const active = tasks.filter((t) => t.status !== "completed");
   const dueToday = active.filter((t) => t.dueAt <= today);
@@ -79,23 +88,23 @@ export function FarmSummaryHeader() {
 
   const chips = [
     { icon: MapPin, text: profile.location },
-    { icon: Ruler, text: `${profile.farmSizeAcres} acres` },
-    { icon: CalendarDays, text: `${SEASON_LABEL[profile.season] ?? profile.season} season` },
-    { icon: Sprout, text: profile.selectedCrop ?? "No crop selected" },
+    { icon: Ruler, text: `${profile.farmSizeAcres} ${t.common.acres}` },
+    { icon: CalendarDays, text: t.chrome.seasonField(t.common.seasons[profile.season]) },
+    { icon: Sprout, text: profile.selectedCrop ?? t.chrome.noCropSelected },
   ];
 
   const status = [
-    { label: "Farm configured", done: true, href: "/farm-profile" },
-    { label: profile.selectedCrop ?? "Crop not selected", done: Boolean(profile.selectedCrop), href: "/crop-advisor" },
+    { label: t.dashboard.statusFarmConfigured, done: true, href: "/farm-profile" },
+    { label: profile.selectedCrop ?? t.dashboard.statusCropNotSelected, done: Boolean(profile.selectedCrop), href: "/crop-advisor" },
     {
       label: snapshot
         ? `${Math.round(snapshot.current.temperatureC)}°C · ${snapshot.current.condition}`
-        : "Weather loading…",
+        : t.dashboard.statusWeatherLoading,
       done: Boolean(snapshot),
       href: "/weather",
     },
     {
-      label: nextAction ? `Next: ${nextAction.title}` : "Plan not generated yet",
+      label: nextAction ? t.dashboard.statusNext(nextAction.title) : t.dashboard.statusPlanNotGenerated,
       done: Boolean(nextAction),
       href: "/planner",
     },
@@ -106,12 +115,12 @@ export function FarmSummaryHeader() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-lime">
-            Farm overview
+            {t.dashboard.farmOverview}
           </p>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-white">
-            {greeting}, {firstName}
+            {greetingLabel}, {firstName}
           </h1>
-          <ul className="mt-3 flex flex-wrap gap-2" aria-label="Farm context">
+          <ul className="mt-3 flex flex-wrap gap-2" aria-label={t.dashboard.farmContextAria}>
             {chips.map(({ icon: Icon, text }) => (
               <li
                 key={text}
@@ -129,7 +138,7 @@ export function FarmSummaryHeader() {
             className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-medium text-white ring-1 ring-white/25 transition-colors hover:bg-white/20"
           >
             <Sprout className="h-4 w-4 text-lime" aria-hidden />
-            Choose a crop to personalise guidance
+            {t.dashboard.chooseCropCta}
           </Link>
         )}
       </div>
@@ -137,7 +146,7 @@ export function FarmSummaryHeader() {
       {/* Compact contextual summary */}
       <ul
         className="mt-6 grid gap-2 border-t border-white/10 pt-5 sm:grid-cols-2 lg:grid-cols-4"
-        aria-label="Farm status"
+        aria-label={t.dashboard.farmStatusAria}
       >
         {status.map((item) => (
           <li key={item.label}>
@@ -166,10 +175,14 @@ export function FarmSummaryHeader() {
       {(latestHealthCheck || latestOperation) && (
         <p className="mt-4 text-xs text-white/60">
           {latestHealthCheck
-            ? `Last health check: ${latestHealthCheck.crop} — ${latestHealthCheck.possibleCondition} (${latestHealthCheck.likelihood})`
+            ? t.dashboard.lastHealthCheck(
+                latestHealthCheck.crop,
+                latestHealthCheck.possibleCondition,
+                latestHealthCheck.likelihood,
+              )
             : null}
           {latestHealthCheck && latestOperation ? " · " : null}
-          {latestOperation ? `Latest operation: ${latestOperation.operationName}` : null}
+          {latestOperation ? t.dashboard.latestOperation(latestOperation.operationName) : null}
         </p>
       )}
     </section>

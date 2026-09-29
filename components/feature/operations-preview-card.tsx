@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { DataSourceTag } from "@/components/ui/badge";
 import { useFarmProfile } from "@/lib/farm-context";
+import { useLanguage } from "@/lib/i18n/language-context";
+import type { Dictionary } from "@/lib/i18n/en";
 
 /**
  * OperationsPreviewCard — state-driven dashboard entry to the farm
@@ -22,34 +24,49 @@ import { useFarmProfile } from "@/lib/farm-context";
 function StatusLine({
   status,
   response,
+  t,
 }: {
   status: "idle" | "reviewing" | "submitted" | "provider_response";
   response?: "accepted" | "unavailable";
+  t: Dictionary;
 }) {
   if (status === "submitted") {
-    return <span className="font-medium text-canopy-800">Request submitted</span>;
+    return (
+      <span className="font-medium text-canopy-800">
+        {t.featureCards.opsSubmitted}
+      </span>
+    );
   }
   if (status === "provider_response" && response === "accepted") {
     return (
       <span className="flex items-center gap-1.5 font-medium text-canopy-800">
         <CheckCircle2 className="h-3.5 w-3.5 text-sprout-500" aria-hidden />
-        Provider accepted the request
+        {t.featureCards.opsAccepted}
       </span>
     );
   }
   if (status === "provider_response" && response === "unavailable") {
-    return <span className="font-medium text-harvest-600">Provider unavailable</span>;
+    return (
+      <span className="font-medium text-harvest-600">
+        {t.featureCards.opsProviderUnavailable}
+      </span>
+    );
   }
-  return <span className="font-medium text-canopy-800">Request in progress</span>;
+  return (
+    <span className="font-medium text-canopy-800">
+      {t.featureCards.opsInProgress}
+    </span>
+  );
 }
 
 export function OperationsPreviewCard() {
   const { latestOperation, profile } = useFarmProfile();
+  const { t } = useLanguage();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Farm Operations</CardTitle>
+        <CardTitle>{t.featureCards.opsTitle}</CardTitle>
         <DataSourceTag source="demo" />
       </CardHeader>
       <CardContent>
@@ -71,10 +88,11 @@ export function OperationsPreviewCard() {
                 <StatusLine
                   status={latestOperation.status}
                   response={latestOperation.response}
+                  t={t}
                 />
               </p>
               <p className="mt-1 text-[11px] text-loam-500">
-                Availability depends on connected service providers.
+                {t.featureCards.opsAvailabilityNote}.
               </p>
             </div>
           </div>
@@ -85,11 +103,10 @@ export function OperationsPreviewCard() {
             </div>
             <div>
               <p className="text-sm font-semibold text-canopy-900">
-                Plan a farm operation
+                {t.featureCards.opsPlanTitle}
               </p>
               <p className="mt-1 text-sm text-loam-600">
-                Choose an operation, review suitable machinery, and send a
-                service request.
+                {t.featureCards.opsPlanBody}
               </p>
             </div>
           </div>
@@ -97,13 +114,13 @@ export function OperationsPreviewCard() {
       </CardContent>
       <CardFooter>
         <p className="text-xs text-loam-500">
-          Availability depends on connected service providers
+          {t.featureCards.opsAvailabilityNote}
         </p>
         <Link
           href="/operations"
           className="flex cursor-pointer items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
         >
-          {latestOperation ? "View request status" : "Open workflow"}
+          {latestOperation ? t.featureCards.opsViewStatus : t.featureCards.opsOpenWorkflow}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </CardFooter>

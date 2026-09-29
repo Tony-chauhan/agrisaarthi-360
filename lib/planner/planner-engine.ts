@@ -9,6 +9,8 @@ import type {
   TaskPriority,
 } from "@/lib/planner/types";
 import { PLANNER_CAVEAT, TASK_PRIORITY_RANK } from "@/lib/planner/types";
+import type { Lang } from "@/lib/i18n/types";
+import { t as dict } from "@/lib/i18n";
 
 /**
  * PLANNER ENGINE (P1.1) — deterministic, transparent, rules-based.
@@ -19,6 +21,9 @@ import { PLANNER_CAVEAT, TASK_PRIORITY_RANK } from "@/lib/planner/types";
  * from the P0 rules engine output, health follow-ups only from an actual
  * HealthCheckSummary, operation tasks only from an actual operation
  * summary. Every task carries an honest source label.
+ *
+ * English is the deterministic default (verify suites assert English
+ * strings); pass `lang` to generate task text in the selected UI language.
  */
 
 /** Deterministic id seed from the task identity. */
@@ -54,7 +59,8 @@ function taskFromTemplate(
   weatherCondition: CropCalendarTemplate["weatherCondition"],
   startDate: string,
   nowIso: string,
-  farmId: string
+  farmId: string,
+  weatherNote: string
 ): FarmTask {
   const ts = new Date(nowIso).toISOString();
   return {
@@ -72,7 +78,7 @@ function taskFromTemplate(
     weatherDependency: weatherCondition
       ? {
           condition: weatherCondition,
-          note: "Weather-aware task — re-check the forecast before acting.",
+          note: weatherNote,
         }
       : undefined,
     createdAt: ts,
@@ -88,12 +94,14 @@ function weatherTasks(
   input: PlannerEngineInput,
   startDate: string,
   nowIso: string,
-  farmId: string
+  farmId: string,
+  lang: Lang
 ): FarmTask[] {
   const wa = input.weatherAction;
   if (!wa) return [];
   const ts = new Date(nowIso).toISOString();
   const tasks: FarmTask[] = [];
+  const P = lang === "hi" ? dict("hi").plannerLib : null;
 
   // Irrigation-category actions become an explicit review task.
   if (wa.category === "irrigation") {
@@ -101,7 +109,7 @@ function weatherTasks(
       id: `task-${seedFor(["weather-irrigation-review", startDate])}`,
       farmId,
       cropId: input.profile.selectedCrop,
-      title: "Irrigation review",
+      title: P ? P.weatherTaskIrrigation : "Irrigation review",
       description: `${wa.message} ${wa.recommendation}`,
       category: "irrigation",
       dueAt: todayIso(nowIso),
@@ -124,7 +132,7 @@ function weatherTasks(
       id: `task-${seedFor(["weather-fieldwork-review", startDate])}`,
       farmId,
       cropId: input.profile.selectedCrop,
-      title: "Review field work timing",
+      title: P ? P.weatherTaskFieldwork : "Review field work timing",
       description: `${wa.message} ${wa.recommendation}`,
       category: "weather-action",
       dueAt: todayIso(nowIso),
@@ -147,7 +155,7 @@ function weatherTasks(
       id: `task-${seedFor(["weather-drainage-check", startDate])}`,
       farmId,
       cropId: input.profile.selectedCrop,
-      title: "Check field drainage",
+      title: P ? P.weatherTaskDrainage : "Check field drainage",
       description: `${wa.message} ${wa.recommendation}`,
       category: "weather-action",
       dueAt: todayIso(nowIso),
@@ -170,18 +178,28 @@ function weatherTasks(
 function healthTasks(
   input: PlannerEngineInput,
   nowIso: string,
-  farmId: string
+  farmId: string,
+  lang: Lang
 ): FarmTask[] {
   const health = input.latestHealthCheck;
   if (!health) return [];
   const ts = new Date(nowIso).toISOString();
+  const P = lang === "hi" ? dict("hi").plannerLib : null;
   return [
     {
       id: `task-${seedFor(["health-followup", health.analyzedAt])}`,
       farmId,
       cropId: health.crop,
-      title: `Follow up: ${health.possibleCondition}`,
-      description: `Crop health check on ${health.crop} indicated "${health.possibleCondition}" (visual likelihood: ${health.likelihood}). Re-inspect affected plants, capture a clearer photo if needed, and confirm with a qualified agriculture professional before treatment.`,
+      title: P
+        ? P.healthFollowUpTitle(health.possibleCondition)
+        : `Follow up: ${health.possibleCondition}`,
+      description: P
+        ? P.healthFollowUpDescription(
+            health.crop,
+            health.possibleCondition,
+            health.likelihood,
+          )
+        : `Crop health check on ${health.crop} indicated "${health.possibleCondition}" (visual likelihood: ${health.likelihood}). Re-inspect affected plants, capture a clearer photo if needed, and confirm with a qualified agriculture professional before treatment.`,
       category: "health-followup",
       dueAt: addDays(todayIso(nowIso), 2),
       status: "planned",
@@ -199,23 +217,33 @@ function healthTasks(
 function operationTasks(
   input: PlannerEngineInput,
   nowIso: string,
-  farmId: string
+  farmId: string,
+  lang: Lang
 ): FarmTask[] {
   const op = input.latestOperation;
   if (!op || op.status === "idle" || op.status === "reviewing") return [];
   const ts = new Date(nowIso).toISOString();
+  const P = lang === "hi" ? dict("hi").plannerLib : null;
   const accepted = op.status === "provider_response" && op.response === "accepted";
   return [
     {
       id: `task-${seedFor(["operation-track", op.operationId, op.status])}`,
       farmId,
       cropId: input.profile.selectedCrop,
-      title: accepted
-        ? `Prepare for ${op.operationName.toLowerCase()}`
-        : `Track ${op.operationName.toLowerCase()} request`,
-      description: accepted
-        ? `${op.operationName} request is accepted in the service workflow. Prepare the field and confirm final scheduling directly with the provider.`
-        : `${op.operationName} request is awaiting provider response. Availability depends on connected service providers — try an alternative machine if unavailable.`,
+      title: P
+        ? accepted
+          ? P.operationPrepare(op.operationName)
+          : P.operationTrack(op.operationName)
+        : accepted
+          ? `Prepare for ${op.operationName.toLowerCase()}`
+          : `Track ${op.operationName.toLowerCase()} request`,
+      description: P
+        ? accepted
+          ? P.operationAcceptedDescription(op.operationName)
+          : P.operationWaitingDescription(op.operationName)
+        : accepted
+          ? `${op.operationName} request is accepted in the service workflow. Prepare the field and confirm final scheduling directly with the provider.`
+          : `${op.operationName} request is awaiting provider response. Availability depends on connected service providers — try an alternative machine if unavailable.`,
       category: "operation",
       dueAt: addDays(todayIso(nowIso), accepted ? 3 : 1),
       status: "planned",
@@ -283,11 +311,13 @@ export function bucketPlan(tasks: FarmTask[], nowIso: string): PlannerPlan["buck
  * Generate the plan from the current farm context.
  * Deterministic: identical input (and clock) → identical output.
  */
-export function generatePlan(input: PlannerEngineInput): PlannerPlan {
+export function generatePlan(input: PlannerEngineInput, lang: Lang = "en"): PlannerPlan {
   const nowIso = input.now ?? new Date().toISOString();
   const farmId = farmIdFor(input.profile.location);
   const crop = input.profile.selectedCrop?.trim();
   const startDate = (input.calendarStartDate ?? nowIso).slice(0, 10);
+  const P = lang === "hi" ? dict("hi").plannerLib : null;
+  const weatherNote = "Weather-aware task — re-check the forecast before acting.";
 
   const tasks: FarmTask[] = [];
 
@@ -307,23 +337,24 @@ export function generatePlan(input: PlannerEngineInput): PlannerPlan {
           t.weatherCondition,
           startDate,
           nowIso,
-          farmId
+          farmId,
+          weatherNote
         )
       );
     }
   }
 
   // 2. Context-derived tasks.
-  tasks.push(...weatherTasks(input, startDate, nowIso, farmId));
-  tasks.push(...healthTasks(input, nowIso, farmId));
-  tasks.push(...operationTasks(input, nowIso, farmId));
+  tasks.push(...weatherTasks(input, startDate, nowIso, farmId, lang));
+  tasks.push(...healthTasks(input, nowIso, farmId, lang));
+  tasks.push(...operationTasks(input, nowIso, farmId, lang));
 
   return {
     tasks,
     buckets: bucketPlan(tasks, nowIso),
     generatedAt: nowIso,
     source: "rules-based",
-    caveat: PLANNER_CAVEAT,
+    caveat: P ? dict("hi").plannerLib.caveat : PLANNER_CAVEAT,
   };
 }
 
@@ -331,3 +362,6 @@ export function generatePlan(input: PlannerEngineInput): PlannerPlan {
 export function taskSourceLabel(task: FarmTask): DataSource {
   return task.sourceLabel;
 }
+
+// BUCKET_KEYS retained for potential external consumers.
+export { BUCKET_KEYS };

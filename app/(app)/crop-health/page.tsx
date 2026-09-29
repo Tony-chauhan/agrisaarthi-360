@@ -27,6 +27,7 @@ import type { NormalizedAnalysis } from "@/lib/crop-health/types";
 import { useFarmProfile } from "@/lib/farm-context";
 import { useTimeline } from "@/lib/timeline/timeline-context";
 import { usePlanner } from "@/lib/planner/task-store";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { CalendarPlus } from "lucide-react";
 
 type Phase = "upload" | "analyzing" | "result";
@@ -77,6 +78,7 @@ export default function CropHealthPage() {
   const { profile, setLatestHealthCheck } = useFarmProfile();
   const { emitEvent } = useTimeline();
   const { addTask } = usePlanner();
+  const { t, lang } = useLanguage();
   const [followUpAdded, setFollowUpAdded] = useState(false);
 
   const [phase, setPhase] = useState<Phase>("upload");
@@ -148,10 +150,13 @@ export default function CropHealthPage() {
       // P1: actual action → timeline event (provenance-eligible).
       emitEvent({
         eventType: "HEALTH_CHECK",
-        title: `Health check: ${
-          outcome.analysis.cropName ?? profile.selectedCrop ?? "crop"
-        }`,
-        description: `Possible condition: ${outcome.analysis.possibleCondition} (visual likelihood: ${outcome.analysis.likelihood}).`,
+        title: t.cropHealth.eventCheckTitle(
+          outcome.analysis.cropName ?? profile.selectedCrop ?? (lang === "hi" ? "फसल" : "crop"),
+        ),
+        description: t.cropHealth.eventCheckDescription(
+          outcome.analysis.possibleCondition,
+          outcome.analysis.likelihood,
+        ),
         source: outcome.analysis.source,
         entityType: "health",
         entityId: outcome.analysis.analyzedAt,
@@ -182,25 +187,22 @@ export default function CropHealthPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <PageHeader
-        eyebrow="AI Crop Health Analysis — not a diagnosis"
-        title="AI Crop Health Analysis"
-        description="Upload a leaf photo for a cautious visual assessment. Always confirm with a qualified agriculture professional before treating."
+        eyebrow={t.cropHealth.eyebrow}
+        title={t.cropHealth.title}
+        description={t.cropHealth.description}
       />
 
       {/* Trust/privacy note — technically true: nothing is persisted */}
-      <Alert tone="info" title="How this works">
-        Results are possible conditions with visual likelihood — never
-        certainty. Uploaded images are used for this analysis flow and are not
-        stored permanently.
+      <Alert tone="info" title={t.cropHealth.howTitle}>
+        {t.cropHealth.howBody}
       </Alert>
 
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Leaf / crop image</CardTitle>
+            <CardTitle>{t.cropHealth.imageTitle}</CardTitle>
             <CardDescription>
-              One clear, well-lit photo works best — JPEG, PNG or WEBP, up to
-              5&nbsp;MB.
+              {t.cropHealth.imageDescription}
             </CardDescription>
           </div>
           {phase === "result" && analysis ? (
@@ -222,10 +224,10 @@ export default function CropHealthPage() {
                   </span>
                   <span>
                     <span className="block text-sm font-semibold text-canopy-900">
-                      Upload a clear leaf or crop image
+                      {t.cropHealth.uploadTitle}
                     </span>
                     <span className="mt-1 block text-xs text-loam-500">
-                      Tap to choose an image — JPEG, PNG or WEBP
+                      {t.cropHealth.uploadHint}
                     </span>
                   </span>
                 </label>
@@ -243,7 +245,7 @@ export default function CropHealthPage() {
                 {inputError ? (
                   <Alert
                     tone="danger"
-                    title="Image not usable"
+                    title={t.cropHealth.imageNotUsable}
                     className="mt-4"
                   >
                     {inputError}
@@ -253,7 +255,7 @@ export default function CropHealthPage() {
                         variant="secondary"
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        Choose another image
+                        {t.cropHealth.chooseAnother}
                       </Button>
                     </div>
                   </Alert>
@@ -264,7 +266,7 @@ export default function CropHealthPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={image.previewUrl}
-                  alt={`Preview of selected crop image: ${image.fileName}`}
+                  alt={t.cropHealth.previewAlt(image.fileName)}
                   className="h-64 w-full rounded-xl border border-canopy-100 object-cover"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-canopy-100 bg-white px-4 py-3">
@@ -280,7 +282,7 @@ export default function CropHealthPage() {
                   <div className="flex shrink-0 gap-2">
                     <Button size="sm" variant="secondary" onClick={clearImage}>
                       <X className="h-4 w-4" aria-hidden />
-                      Remove
+                      {t.common.remove}
                     </Button>
                     <Button
                       size="sm"
@@ -288,7 +290,7 @@ export default function CropHealthPage() {
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <ImageIcon className="h-4 w-4" aria-hidden />
-                      Replace
+                      {t.common.replace}
                     </Button>
                   </div>
                 </div>
@@ -299,7 +301,7 @@ export default function CropHealthPage() {
                     onClick={() => void startAnalysis()}
                     leftIcon={<Sparkles className="h-4 w-4" aria-hidden />}
                   >
-                    Analyze image
+                    {t.cropHealth.analyzeImage}
                   </Button>
                 </div>
               </div>
@@ -321,11 +323,10 @@ export default function CropHealthPage() {
               />
               <div>
                 <p className="text-sm font-semibold text-canopy-900">
-                  Analyzing crop image…
+                  {t.cropHealth.analyzingTitle}
                 </p>
                 <p className="mt-1 text-xs text-loam-500">
-                  Usually takes a few seconds. You&apos;ll get a cautious
-                  visual assessment.
+                  {t.cropHealth.analyzingHint}
                 </p>
               </div>
             </div>
@@ -338,46 +339,45 @@ export default function CropHealthPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={image?.previewUrl}
-              alt={`Analyzed crop photo: ${image?.fileName ?? "leaf"}`}
+              alt={t.cropHealth.analyzedAlt(image?.fileName ?? "leaf")}
               className="h-48 w-full rounded-xl border border-canopy-100 object-cover"
             />
 
             <div className="mt-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-loam-500">
-                Possible condition
+                {t.cropHealth.possibleCondition}
               </p>
               <p className="mt-1 font-display text-xl font-semibold text-canopy-950">
                 {analysis.possibleCondition}
               </p>
               {analysis.cropName ? (
                 <p className="mt-1 text-sm text-loam-600">
-                  Visual crop suggestion: {analysis.cropName}
+                  {t.cropHealth.cropSuggestion(analysis.cropName)}
                 </p>
               ) : null}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge tone="warning">
-                  Visual likelihood: {analysis.likelihood}
+                  {t.cropHealth.visualLikelihood(analysis.likelihood)}
                 </Badge>
                 {typeof analysis.confidence === "number" &&
                 !analysis.isFallback ? (
                   <Badge tone="neutral">
-                    Model confidence: {analysis.confidence.toFixed(2)} — not
-                    agricultural certainty
+                    {t.cropHealth.modelConfidence(analysis.confidence.toFixed(2))}
                   </Badge>
                 ) : null}
                 {analysis.isFallback ? (
-                  <Badge tone="warning">Fallback guidance</Badge>
+                  <Badge tone="warning">{t.cropHealth.fallbackBadge}</Badge>
                 ) : null}
                 {analysis.imageQualityInsufficient ? (
-                  <Badge tone="warning">Image quality insufficient</Badge>
+                  <Badge tone="warning">{t.cropHealth.qualityBadge}</Badge>
                 ) : null}
               </div>
             </div>
 
             {/* Observations */}
-            <section aria-label="What we observed" className="mt-4">
+            <section aria-label={t.cropHealth.observedAria} className="mt-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-loam-500">
-                What we observed
+                {t.cropHealth.observedTitle}
               </p>
               <ul className="mt-2 flex flex-col gap-1.5">
                 {analysis.observations.map((o) => (
@@ -396,9 +396,9 @@ export default function CropHealthPage() {
             </section>
 
             {/* Actions */}
-            <section aria-label="Recommended next steps" className="mt-4">
+            <section aria-label={t.cropHealth.actionsAria} className="mt-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-loam-500">
-                Recommended next steps
+                {t.cropHealth.actionsTitle}
               </p>
               <ol className="mt-2 flex flex-col gap-1.5">
                 {analysis.recommendedActions.map((a, i) => (
@@ -416,17 +416,16 @@ export default function CropHealthPage() {
             </section>
 
             {/* Caveat / expert confirmation */}
-            <Alert tone="warning" title="Important" className="mt-4">
-              {analysis.caveat} This is an image-based screening aid, not a
-              confirmed diagnosis. Confirm with a qualified agriculture
-              professional.
+            <Alert tone="warning" title={t.cropHealth.importantTitle} className="mt-4">
+              {analysis.caveat}
+              {t.cropHealth.importantBody}
             </Alert>
 
             {/* P1: health follow-up → Farm Plan (user-confirmed). */}
             {followUpAdded ? (
               <p className="mt-4 flex items-center gap-1.5 rounded-lg bg-sprout-400/15 px-3 py-2 text-xs font-medium text-canopy-800">
                 <CalendarPlus className="h-3.5 w-3.5" aria-hidden />
-                Follow-up added to your Farm Plan.
+                {t.cropHealth.followUpAdded}
               </p>
             ) : (
               <div className="mt-4">
@@ -436,10 +435,14 @@ export default function CropHealthPage() {
                   leftIcon={<CalendarPlus className="h-4 w-4" aria-hidden />}
                   onClick={() => {
                     addTask({
-                      title: `Follow up: ${analysis.possibleCondition}`,
-                      description: `Crop health check on ${
-                        analysis.cropName ?? profile.selectedCrop ?? "your crop"
-                      } indicated "${analysis.possibleCondition}" (visual likelihood: ${analysis.likelihood}). Re-inspect affected plants and confirm with a qualified agriculture professional before treatment.`,
+                      title: t.cropHealth.followUpTaskTitle(
+                        analysis.possibleCondition,
+                      ),
+                      description: t.cropHealth.followUpTaskDescription(
+                        analysis.cropName ?? profile.selectedCrop ?? (lang === "hi" ? "आपकी फसल" : "your crop"),
+                        analysis.possibleCondition,
+                        analysis.likelihood,
+                      ),
                       category: "health-followup",
                       dueAt: new Date(Date.now() + 2 * 86400000)
                         .toISOString()
@@ -453,11 +456,11 @@ export default function CropHealthPage() {
                     setFollowUpAdded(true);
                   }}
                 >
-                  Add follow-up to Farm Plan
+                  {t.cropHealth.addFollowUp}
                 </Button>
                 {analysis.isFallback ? (
                   <p className="mt-1 text-[11px] text-loam-500">
-                    Task will be labeled FALLBACK — derived from fallback guidance, not an AI model result.
+                    {t.cropHealth.fallbackTaskNote}
                   </p>
                 ) : null}
               </div>
@@ -473,12 +476,12 @@ export default function CropHealthPage() {
                 aria-hidden
               />
               {analysis.isFallback
-                ? "Fallback guidance — not an AI model result"
-                : "AI model result"}
+                ? t.cropHealth.resultFallback
+                : t.cropHealth.resultModel}
             </p>
             <Button size="sm" variant="secondary" onClick={reset}>
               <Leaf className="h-4 w-4" aria-hidden />
-              Analyze another image
+              {t.cropHealth.analyzeAnother}
             </Button>
           </CardFooter>
         ) : null}
@@ -486,13 +489,8 @@ export default function CropHealthPage() {
 
       {/* Fallback notice when the request itself failed */}
       {showUnavailable && phase === "upload" ? (
-        <Alert
-          tone="info"
-          title="AI analysis is temporarily unavailable — showing fallback guidance"
-        >
-          The live model could not be reached, so conservative fallback
-          guidance will be shown on the next successful analysis. You can
-          retry at any time.
+        <Alert tone="info" title={t.cropHealth.unavailableTitle}>
+          {t.cropHealth.unavailableBody}
         </Alert>
       ) : null}
     </div>

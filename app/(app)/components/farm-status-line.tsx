@@ -2,13 +2,8 @@
 
 import { MapPin, CalendarDays } from "lucide-react";
 import { useFarmProfile } from "@/lib/farm-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { Badge } from "@/components/ui/badge";
-
-const SEASON_LABEL: Record<string, string> = {
-  kharif: "Kharif",
-  rabi: "Rabi",
-  zaid: "Zaid",
-};
 
 /**
  * Compact context line for the workspace topbar — real provider state,
@@ -16,9 +11,10 @@ const SEASON_LABEL: Record<string, string> = {
  */
 export function FarmSummaryStatusLine() {
   const { profile, isProfileEmpty } = useFarmProfile();
+  const { t } = useLanguage();
 
   if (isProfileEmpty) {
-    return <Badge tone="warning">Set up your farm to unlock guidance</Badge>;
+    return <Badge tone="warning">{t.chrome.setupPrompt}</Badge>;
   }
 
   return (
@@ -27,7 +23,7 @@ export function FarmSummaryStatusLine() {
       <span className="font-medium text-canopy-900">{profile.location}</span>
       <span aria-hidden className="text-loam-300">·</span>
       <CalendarDays className="h-3.5 w-3.5 text-canopy-600" aria-hidden />
-      {SEASON_LABEL[profile.season] ?? profile.season}
+      {t.common.seasons[profile.season]}
       {profile.selectedCrop ? (
         <>
           <span aria-hidden className="text-loam-300">·</span>

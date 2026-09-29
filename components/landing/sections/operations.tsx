@@ -1,14 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { OPERATIONS } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * FARM OPERATIONS — the workflow, drawn as four connected steps on a
  * graphite panel. The service-data reality is stated plainly.
  */
 export function Operations() {
+  const { t } = useLanguage();
+  const L = t.landing;
+
   return (
     <section
       id="operations"
@@ -21,29 +26,29 @@ export function Operations() {
             <Reveal>
               <p className="eyebrow text-lime">
                 <span aria-hidden className="h-px w-8 bg-lime" />
-                {OPERATIONS.eyebrow}
+                {L.operations.eyebrow}
               </p>
             </Reveal>
             <SplitText
               id="operations-heading"
               as="h2"
-              lines={OPERATIONS.headlineLines}
+              lines={[...L.operations.headlineLines]}
               className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl"
             />
           </div>
           <Reveal delay={200}>
             <p className="max-w-md text-base leading-relaxed text-white/65">
-              {OPERATIONS.body}
+              {L.operations.body}
             </p>
           </Reveal>
         </div>
 
         {/* Workflow */}
         <ol
-          aria-label="Operations workflow"
+          aria-label={L.opsFlowAria}
           className="mt-16 grid gap-px overflow-hidden rounded-2xl bg-white/10 sm:grid-cols-2 lg:grid-cols-4"
         >
-          {OPERATIONS.flow.map((step, i) => (
+          {L.operations.flow.map((step, i) => (
             <Reveal key={step} delay={i * 90} className="h-full">
               <li className="group relative flex h-full flex-col gap-3 bg-graphite p-7 transition-colors duration-300 hover:bg-white/5">
                 <span className="font-display text-4xl font-semibold text-white/15 transition-colors group-hover:text-lime/60">
@@ -52,7 +57,7 @@ export function Operations() {
                 <p className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
                   {step}
                 </p>
-                {i < OPERATIONS.flow.length - 1 ? (
+                {i < L.operations.flow.length - 1 ? (
                   <ArrowRight
                     aria-hidden
                     className="absolute right-5 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-white/25 lg:block"
@@ -67,10 +72,10 @@ export function Operations() {
         <div className="mt-14 flex flex-wrap items-start justify-between gap-8">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
-              Supported operations
+              {L.opsSupportedLabel}
             </p>
             <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
-              {OPERATIONS.operationTypes.map((op) => (
+              {L.operations.operationTypes.map((op) => (
                 <li
                   key={op}
                   className="text-sm font-medium text-white/75"
@@ -82,16 +87,16 @@ export function Operations() {
           </div>
           <div className="max-w-md">
             <span className="source-tag border-white/25 bg-white/10 text-white/80">
-              {OPERATIONS.source}
+              {L.operations.source}
             </span>
             <p className="mt-3 text-xs leading-relaxed text-white/50">
-              {OPERATIONS.serviceNote}
+              {L.operations.serviceNote}
             </p>
             <Link
-              href={OPERATIONS.cta.href}
+              href="/operations"
               className="group mt-5 inline-flex min-h-12 items-center gap-2 text-base font-semibold text-lime"
             >
-              {OPERATIONS.cta.label}
+              {L.operations.cta}
               <ArrowRight
                 className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
                 aria-hidden

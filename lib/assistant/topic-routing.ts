@@ -11,7 +11,8 @@ interface TopicRule {
   keywords: string[];
 }
 
-/** Ordered — first match wins. Weather/health/operation checked early. */
+/** Ordered — first match wins. Weather/health/operation checked early.
+ *  Hindi keywords included so Hindi questions route identically. */
 const RULES: TopicRule[] = [
   {
     topic: "crop-health",
@@ -29,6 +30,16 @@ const RULES: TopicRule[] = [
       "what is wrong with my crop",
       "wrong with my crop",
       "crop health",
+      // Hindi
+      "बीमारी",
+      "रोग",
+      "पत्ती",
+      "धब्बा",
+      "कीट",
+      "फफूंद",
+      "पीली",
+      "मुरझा",
+      "फसल स्वास्थ्य",
     ],
   },
   {
@@ -44,6 +55,15 @@ const RULES: TopicRule[] = [
       "humidity",
       "wind",
       "heat",
+      // Hindi
+      "मौसम",
+      "बारिश",
+      "सिंचाई",
+      "तापमान",
+      "पूर्वानुमान",
+      "नमी",
+      "हवा",
+      "गर्मी",
     ],
   },
   {
@@ -59,6 +79,13 @@ const RULES: TopicRule[] = [
       "trolley",
       "sprayer",
       "transport",
+      // Hindi
+      "मशीन",
+      "ट्रैक्टर",
+      "हार्वेस्टर",
+      "ट्रॉली",
+      "स्प्रेयर",
+      "परिवहन",
     ],
   },
   {
@@ -71,6 +98,11 @@ const RULES: TopicRule[] = [
       "grow this season",
       "recommend a crop",
       "crop recommendation",
+      // Hindi
+      "कौन सी फसल",
+      "कौन-सी फसल",
+      "फसल सलाह",
+      "फसल की सिफारिश",
     ],
   },
   {
@@ -84,6 +116,14 @@ const RULES: TopicRule[] = [
       "yield",
       "field",
       "crop care",
+      // Hindi
+      "मेरी फसल",
+      "बुवाई",
+      "बीज",
+      "खाद",
+      "कटाई",
+      "उपज",
+      "खेत",
     ],
   },
   {
@@ -96,6 +136,13 @@ const RULES: TopicRule[] = [
       "farm",
       "soil",
       "profile",
+      // Hindi
+      "आज",
+      "मैं क्या करूं",
+      "योजना",
+      "खेत",
+      "मिट्टी",
+      "प्रोफ़ाइल",
     ],
   },
 ];

@@ -4,20 +4,16 @@ import Link from "next/link";
 import { MapPin, Ruler, CalendarDays, Sprout } from "lucide-react";
 import { useFarmProfile } from "@/lib/farm-context";
 import { DEMO_PROFILE } from "@/lib/demo-data";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { Badge } from "@/components/ui/badge";
 
 /**
  * Sidebar farm card — "Current farm" block at the bottom of the nav.
  * Truthful labelling: the untouched starter profile is sample data.
  */
-const SEASON_LABEL: Record<string, string> = {
-  kharif: "Kharif",
-  rabi: "Rabi",
-  zaid: "Zaid",
-};
-
 export function SidebarFarmCard() {
   const { profile, isProfileEmpty } = useFarmProfile();
+  const { t } = useLanguage();
 
   const isSampleFarm =
     profile.farmerName === DEMO_PROFILE.farmerName &&
@@ -31,15 +27,15 @@ export function SidebarFarmCard() {
     return (
       <div className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">
-          Current farm
+          {t.chrome.currentFarm}
         </p>
         <p className="mt-1.5 text-sm text-white/70">
-          No farm set —{" "}
+          {t.chrome.noFarmSet}{" "}
           <Link
             href="/farm-profile"
             className="font-medium text-lime underline-offset-2 hover:underline"
           >
-            create profile
+            {t.chrome.createProfile}
           </Link>
         </p>
       </div>
@@ -48,25 +44,31 @@ export function SidebarFarmCard() {
 
   const rows = [
     { icon: MapPin, text: profile.location },
-    { icon: Ruler, text: `${profile.farmSizeAcres} acres` },
+    {
+      icon: Ruler,
+      text: `${profile.farmSizeAcres} ${t.common.acres}`,
+    },
     {
       icon: CalendarDays,
-      text: `${SEASON_LABEL[profile.season] ?? profile.season} season`,
+      text: t.chrome.seasonField(t.common.seasons[profile.season]),
     },
-    { icon: Sprout, text: profile.selectedCrop ?? "No crop selected" },
+    {
+      icon: Sprout,
+      text: profile.selectedCrop ?? t.chrome.noCropSelected,
+    },
   ];
 
   return (
     <div className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">
-          Current farm
+          {t.chrome.currentFarm}
         </p>
         <Badge
           tone={isSampleFarm ? "warning" : "success"}
           className={isSampleFarm ? "" : "border-lime/30 bg-lime/10 text-lime"}
         >
-          {isSampleFarm ? "Sample farm data" : "Your farm data"}
+          {isSampleFarm ? t.chrome.sampleFarmData : t.chrome.yourFarmData}
         </Badge>
       </div>
       <p className="mt-2 truncate text-sm font-semibold text-white">

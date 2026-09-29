@@ -14,6 +14,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Badge, DataSourceTag } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * PlannerPreviewCard — dashboard entry to the Farm Planner.
@@ -24,6 +25,7 @@ export function PlannerPreviewCard() {
   const { profile, isProfileEmpty } = useFarmProfile();
   const { tasks } = usePlanner();
   const { snapshot } = useWeather(profile.location);
+  const { t } = useLanguage();
   const weatherAction = snapshot
     ? deriveFarmWeatherAction(snapshot, profile)
     : null;
@@ -41,35 +43,35 @@ export function PlannerPreviewCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Today&apos;s Plan</CardTitle>
+        <CardTitle>{t.dashboard.plannerTitle}</CardTitle>
         <DataSourceTag source="rules-based" />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {isProfileEmpty ? (
           <p className="text-sm text-loam-600">
-            Set up your farm profile and select a crop to build your plan.
+            {t.dashboard.plannerSetupHint}
           </p>
         ) : !profile.selectedCrop ? (
           <p className="text-sm text-loam-600">
-            Select a crop in the advisor to generate your contextual farm plan.
+            {t.dashboard.plannerCropHint}
           </p>
         ) : (
           <>
             <div className="flex flex-wrap gap-2">
               <Badge tone="accent">
                 <CalendarCheck className="h-3.5 w-3.5" aria-hidden />
-                {todayCount} due today
+                {t.dashboard.plannerDueToday(todayCount)}
               </Badge>
               {weatherCount > 0 ? (
                 <Badge tone="info">
                   <CloudSun className="h-3.5 w-3.5" aria-hidden />
-                  {weatherCount} weather-aware
+                  {t.dashboard.plannerWeatherAware(weatherCount)}
                 </Badge>
               ) : null}
               {completedCount > 0 ? (
                 <Badge tone="success">
                   <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-                  {completedCount} completed
+                  {t.dashboard.plannerCompleted(completedCount)}
                 </Badge>
               ) : null}
             </div>
@@ -82,14 +84,14 @@ export function PlannerPreviewCard() {
                       <span className="block truncate font-medium text-canopy-900">
                         {task.title}
                       </span>
-                      <span className="text-xs text-loam-500">Due {task.dueAt}</span>
+                      <span className="text-xs text-loam-500">{t.common.duePrefix(task.dueAt)}</span>
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="text-sm text-loam-600">
-                No active tasks right now — open the planner to generate your plan.
+                {t.dashboard.plannerNoTasks}
               </p>
             )}
           </>
@@ -98,14 +100,14 @@ export function PlannerPreviewCard() {
       <CardFooter>
         <p className="text-xs text-loam-500">
           {weatherAction
-            ? `Weather action: ${weatherAction.title.toLowerCase()}`
-            : "Decision engine · from your farm context"}
+            ? t.dashboard.plannerWeatherAction(weatherAction.title)
+            : t.dashboard.plannerDecisionEngine}
         </p>
         <Link
           href="/planner"
           className="flex cursor-pointer items-center gap-1 text-sm font-medium text-terracotta-600 hover:underline"
         >
-          Open planner
+          {t.dashboard.plannerOpen}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </CardFooter>

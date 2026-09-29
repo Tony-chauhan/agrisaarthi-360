@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, ArrowDown } from "lucide-react";
-import { DECISION_ENGINE } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * THE DECISION ENGINE — a product case study, not a card grid.
@@ -12,6 +14,9 @@ import { Reveal } from "../motion/reveal";
  * never accuracy.
  */
 export function DecisionEngine() {
+  const { t } = useLanguage();
+  const L = t.landing;
+
   return (
     <section
       id="decision"
@@ -24,26 +29,26 @@ export function DecisionEngine() {
           <Reveal>
             <p className="eyebrow">
               <span aria-hidden className="h-px w-8 bg-terracotta-600" />
-              {DECISION_ENGINE.eyebrow}
+              {L.decisionEngine.eyebrow}
             </p>
           </Reveal>
           <SplitText
             id="decision-heading"
             as="h2"
-            lines={DECISION_ENGINE.headlineLines}
+            lines={[...L.decisionEngine.headlineLines]}
             className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-tight text-canopy-950 sm:text-6xl"
           />
           <Reveal delay={200}>
             <p className="mt-6 max-w-md text-base leading-relaxed text-loam-700 sm:text-lg">
-              {DECISION_ENGINE.body}
+              {L.decisionEngine.body}
             </p>
           </Reveal>
           <Reveal delay={300}>
             <Link
-              href={DECISION_ENGINE.cta.href}
+              href="/crop-advisor"
               className="group mt-9 inline-flex min-h-12 items-center gap-2 text-base font-semibold text-terracotta-700"
             >
-              {DECISION_ENGINE.cta.label}
+              {L.decisionEngine.cta}
               <ArrowRight
                 className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
                 aria-hidden
@@ -52,9 +57,7 @@ export function DecisionEngine() {
           </Reveal>
           <Reveal delay={360}>
             <p className="mt-6 max-w-md border-l-2 border-canopy-200 pl-4 text-xs leading-relaxed text-loam-600">
-              The suitability score reflects configured decision weights —
-              it is not a model accuracy measure. The full reasoning is shown
-              inside the advisor.
+              {L.scoreNoteShort}
             </p>
           </Reveal>
         </div>
@@ -64,17 +67,17 @@ export function DecisionEngine() {
           <div className="rounded-2xl border border-canopy-200 bg-white shadow-lift">
             <div className="flex items-center justify-between border-b border-canopy-100 px-6 py-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-loam-500">
-                Crop Advisor
+                {L.advisorPanelLabel}
               </p>
               <span className="source-tag border-canopy-200 bg-canopy-50 text-canopy-700">
-                {DECISION_ENGINE.source}
+                {L.decisionEngine.source}
               </span>
             </div>
 
             <div className="px-6 py-6">
               {/* Inputs */}
-              <ul aria-label="Farm inputs" className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-                {DECISION_ENGINE.inputs.map((input) => (
+              <ul aria-label={L.inputsAria} className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+                {L.decisionEngine.inputs.map((input) => (
                   <li key={input.label}>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-loam-500">
                       {input.label}
@@ -95,22 +98,22 @@ export function DecisionEngine() {
               {/* Decision */}
               <div className="rounded-xl bg-emerald-ink px-5 py-5 text-white">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-lime">
-                  Recommendation
+                  {L.recommendationLabel}
                 </p>
                 <p className="mt-1 font-display text-3xl font-semibold tracking-tight">
-                  Wheat
+                  {L.recommendationValue}
                 </p>
                 <p className="mt-1 text-sm text-white/75">
-                  High suitability for this farm profile
+                  {L.recommendationSubline}
                 </p>
               </div>
 
               {/* Decision basis */}
               <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-loam-500">
-                {DECISION_ENGINE.decisionBasisTitle}
+                {L.decisionEngine.decisionBasisTitle}
               </p>
-              <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Decision basis dimensions">
-                {DECISION_ENGINE.inputs.map((input) => (
+              <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={L.basisListAria}>
+                {L.decisionEngine.inputs.map((input) => (
                   <li
                     key={input.label}
                     className="rounded-full border border-canopy-200 bg-canopy-50 px-2.5 py-1 text-[11px] font-medium text-canopy-700"
@@ -122,7 +125,7 @@ export function DecisionEngine() {
             </div>
 
             <p className="border-t border-canopy-100 px-6 py-3 text-[11px] text-loam-500">
-              {DECISION_ENGINE.sampleNote}
+              {L.decisionEngine.sampleNote}
             </p>
           </div>
         </Reveal>

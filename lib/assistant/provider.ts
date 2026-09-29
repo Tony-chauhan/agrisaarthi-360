@@ -3,6 +3,7 @@ import type {
   AssistantResponse,
   AssistantTopic,
 } from "./types";
+import type { Lang } from "@/lib/i18n/types";
 import { createGeminiAssistantProvider } from "./gemini-provider";
 import { createDemoAssistantProvider } from "./demo-provider";
 import { normalizeAssistantResponse } from "./normalize-response";
@@ -17,16 +18,16 @@ import { normalizeAssistantResponse } from "./normalize-response";
  */
 
 /** Resolve the provider available in this environment. */
-export function resolveAssistantProvider(): {
+export function resolveAssistantProvider(lang: Lang = "en"): {
   provider: import("./types").AssistantProvider;
   isRealProvider: boolean;
 } {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey.trim() === "") {
-    return { provider: createDemoAssistantProvider(), isRealProvider: false };
+    return { provider: createDemoAssistantProvider(lang), isRealProvider: false };
   }
   return {
-    provider: createGeminiAssistantProvider(apiKey),
+    provider: createGeminiAssistantProvider(apiKey, lang),
     isRealProvider: true,
   };
 }
@@ -34,17 +35,21 @@ export function resolveAssistantProvider(): {
 /**
  * Run one assistant request with automatic fallback.
  * Server-side only (needs process.env for the real provider).
+ * `lang` is the UI language: it selects the demo-reply language and is
+ * forwarded to the Gemini provider so it can honor the language directive.
  */
 export async function runAssistant(input: {
   question: string;
   topic: AssistantTopic;
   context: import("./types").AssistantContextPacket;
+  lang?: Lang;
 }): Promise<AssistantResponse> {
-  const { provider, isRealProvider } = resolveAssistantProvider();
+  const lang = input.lang ?? "en";
+  const { provider, isRealProvider } = resolveAssistantProvider(lang);
 
   if (!isRealProvider) {
     // No key configured — deterministic demo path, labeled as such.
-    const demo = createDemoAssistantProvider();
+    const demo = createDemoAssistantProvider(lang);
     const demoResult = await demo.ask(input);
     const normalized = normalizeAssistantResponse(demoResult.status === "success" ? demoResult.payload : {}, {
       source: "demo",
@@ -66,19 +71,22 @@ export async function runAssistant(input: {
       if (normalized) return normalized;
     }
     // Malformed/failed provider output → deterministic demo fallback.
-    return await demoFallback(input);
+    return await demoFallback(input, lang);
   } catch {
     // Timeout, network failure, etc. — contained, never leaked.
-    return await demoFallback(input);
+    return await demoFallback(input, lang);
   }
 }
 
-async function demoFallback(input: {
-  question: string;
-  topic: AssistantTopic;
-  context: import("./types").AssistantContextPacket;
-}): Promise<AssistantResponse> {
-  const demo = createDemoAssistantProvider();
+async function demoFallback(
+  input: {
+    question: string;
+    topic: AssistantTopic;
+    context: import("./types").AssistantContextPacket;
+  },
+  lang: Lang = "en"
+): Promise<AssistantResponse> {
+  const demo = createDemoAssistantProvider(lang);
   const result = await demo.ask(input);
   const normalized = normalizeAssistantResponse(
     result.status === "success" ? result.payload : {},

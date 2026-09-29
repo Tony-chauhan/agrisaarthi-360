@@ -9,6 +9,7 @@ import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
 import { buildAssistantContext } from "@/lib/assistant/assistant-context";
 import type { AssistantResponse } from "@/lib/assistant/types";
 import { usePlanner } from "@/lib/planner/task-store";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { DataSourceTag } from "@/components/ui/badge";
 import { cn } from "@/lib/cn";
 
@@ -31,10 +32,16 @@ interface PanelMessage {
   response?: AssistantResponse;
 }
 
-const QUICK_PROMPTS = [
+const QUICK_PROMPTS_EN = [
   "What should I do today?",
   "Should I irrigate?",
   "What should I check in my wheat crop?",
+] as const;
+
+const QUICK_PROMPTS_HI = [
+  "आज मैं क्या करूं?",
+  "क्या सिंचाई करूं?",
+  "मेरी फसल में क्या जांचूं?",
 ] as const;
 
 export function FloatingAiRobot() {
@@ -42,6 +49,7 @@ export function FloatingAiRobot() {
     useFarmProfile();
   const { addTask } = usePlanner();
   const { snapshot } = useWeather(profile.location);
+  const { t, lang } = useLanguage();
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -101,7 +109,7 @@ export function FloatingAiRobot() {
         const res = await fetch("/api/assistant", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: trimmed, context }),
+          body: JSON.stringify({ question: trimmed, context, uiLanguage: lang }),
         });
         if (!res.ok) throw new Error(`status ${res.status}`);
         const data = (await res.json()) as AssistantResponse;
@@ -115,7 +123,7 @@ export function FloatingAiRobot() {
           {
             id: `a-${Date.now()}`,
             role: "assistant",
-            text: "AI assistant is temporarily unavailable. Showing fallback guidance.",
+            text: t.assistantPage.unavailable,
           },
         ]);
       } finally {
@@ -123,7 +131,7 @@ export function FloatingAiRobot() {
         window.setTimeout(() => inputRef.current?.focus(), 50);
       }
     },
-    [profile, latestHealthCheck, latestOperation, weatherContext, isTyping]
+    [profile, latestHealthCheck, latestOperation, weatherContext, isTyping, lang, t]
   );
 
   /* Keyboard: Escape closes the panel. */
@@ -149,7 +157,7 @@ export function FloatingAiRobot() {
         <div
           ref={panelRef}
           role="dialog"
-          aria-label="AgriSaarthi AI Assistant panel"
+          aria-label={t.robot.panelAria}
           className="fixed bottom-24 right-4 z-50 flex h-[min(560px,calc(100dvh-11rem))] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-canopy-100 bg-white shadow-deep sm:bottom-24 sm:right-6"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
@@ -162,7 +170,7 @@ export function FloatingAiRobot() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">AgriSaarthi AI</p>
                 <p className="truncate text-[11px] text-canopy-100/80">
-                  Connected to your farm context
+                  {t.robot.connected}
                 </p>
               </div>
             </div>
@@ -170,8 +178,8 @@ export function FloatingAiRobot() {
               <button
                 type="button"
                 onClick={() => router.push("/assistant")}
-                aria-label="Expand to full assistant page"
-                title="Open full assistant"
+                aria-label={t.robot.expandAria}
+                title={t.robot.expandTitle}
                 className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-canopy-100 transition-colors hover:bg-white/10"
               >
                 <Maximize2 className="h-4 w-4" aria-hidden />
@@ -179,7 +187,7 @@ export function FloatingAiRobot() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Close assistant panel"
+                aria-label={t.robot.closeAria}
                 className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-canopy-100 transition-colors hover:bg-white/10"
               >
                 <X className="h-4 w-4" aria-hidden />
@@ -192,14 +200,14 @@ export function FloatingAiRobot() {
             className="flex-1 overflow-y-auto px-4 py-3"
             role="log"
             aria-live="polite"
-            aria-label="Assistant conversation"
+            aria-label={t.assistantPage.conversationAria}
           >
             <p className="mx-auto mb-3 w-fit rounded-full bg-canopy-50 px-3 py-1 text-xs text-canopy-700">
               {greeting}
             </p>
             {messages.length === 0 ? (
-              <ul className="flex flex-col gap-2" aria-label="Quick prompts">
-                {QUICK_PROMPTS.map((q) => (
+              <ul className="flex flex-col gap-2" aria-label={t.robot.quickPromptsAria}>
+                {(lang === "hi" ? QUICK_PROMPTS_HI : QUICK_PROMPTS_EN).map((q) => (
                   <li key={q}>
                     <button
                       type="button"
@@ -240,7 +248,7 @@ export function FloatingAiRobot() {
                                   </span>
                                   {added ? (
                                     <span className="shrink-0 text-[11px] font-medium text-sprout-600">
-                                      Added ✓
+                                      {t.robot.added}
                                     </span>
                                   ) : (
                                     <button
@@ -248,7 +256,9 @@ export function FloatingAiRobot() {
                                       onClick={() => {
                                         addTask({
                                           title: action,
-                                          description: `Suggested by AgriSaarthi AI: "${m.response?.answer.slice(0, 120)}"`,
+                                          description: t.robot.suggestedBy(
+                                            m.response?.answer.slice(0, 120) ?? "",
+                                          ),
                                           category: "assistant",
                                           dueAt: new Date().toISOString().slice(0, 10),
                                           priority: "medium",
@@ -258,9 +268,9 @@ export function FloatingAiRobot() {
                                         setAddedActions((prev) => new Set(prev).add(key));
                                       }}
                                       className="shrink-0 cursor-pointer rounded-md border border-canopy-200 px-2 py-1 text-[11px] font-medium text-canopy-700 hover:bg-canopy-50"
-                                      aria-label={`Add to Farm Plan: ${action}`}
+                                      aria-label={t.robot.addToPlanAria(action)}
                                     >
-                                      Add to Farm Plan
+                                      {t.robot.addToPlan}
                                     </button>
                                   )}
                                 </li>
@@ -282,13 +292,13 @@ export function FloatingAiRobot() {
                   </li>
                 ))}
                 {isTyping ? (
-                  <li className="flex items-center gap-2 self-start rounded-2xl bg-canopy-50 px-3.5 py-2.5" aria-label="Assistant is typing">
+                  <li className="flex items-center gap-2 self-start rounded-2xl bg-canopy-50 px-3.5 py-2.5" aria-label={t.assistantPage.typingAria}>
                     <span className="flex items-center gap-1">
                       <span className="typing-dot h-2 w-2 rounded-full bg-canopy-600" />
                       <span className="typing-dot h-2 w-2 rounded-full bg-canopy-600" />
                       <span className="typing-dot h-2 w-2 rounded-full bg-canopy-600" />
                     </span>
-                    <span className="text-xs text-loam-600">AgriSaarthi is thinking…</span>
+                    <span className="text-xs text-loam-600">{t.assistantPage.thinking}</span>
                   </li>
                 ) : null}
               </ul>
@@ -304,21 +314,21 @@ export function FloatingAiRobot() {
             }}
           >
             <label htmlFor="floating-assistant-input" className="sr-only">
-              Ask a question about your farm
+              {t.assistantPage.inputAria}
             </label>
             <input
               ref={inputRef}
               id="floating-assistant-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your farm…"
+              placeholder={t.robot.inputPlaceholder}
               maxLength={500}
               className="h-11 min-w-0 flex-1 rounded-xl border border-canopy-200 bg-white px-3 text-base text-loam-900 placeholder:text-loam-400 focus:border-canopy-500 focus:outline-none"
             />
             <button
               type="submit"
               disabled={!input.trim() || isTyping}
-              aria-label="Send message"
+              aria-label={t.assistantPage.sendAria}
               className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-terracotta-600 text-white transition-colors hover:bg-terracotta-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <SendHorizontal className="h-4 w-4" aria-hidden />
@@ -331,9 +341,9 @@ export function FloatingAiRobot() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Ask AgriSaarthi AI Assistant"
+        aria-label={t.robot.launcherAria}
         aria-expanded={open}
-        title="Ask AgriSaarthi"
+        title={t.chrome.askAgriSaarthi}
         className={cn(
           "group fixed bottom-24 right-4 z-50 flex h-[52px] w-[52px] cursor-pointer items-center justify-center rounded-full shadow-deep transition-transform hover:scale-105 lg:bottom-6 lg:right-6",
           "border border-sprout-400/50 bg-gradient-to-br from-canopy-800 to-canopy-950",
@@ -348,9 +358,9 @@ export function FloatingAiRobot() {
           aria-hidden
         />
         <span className="pointer-events-none absolute right-full mr-2 hidden whitespace-nowrap rounded-lg bg-canopy-950 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100 lg:block">
-          Ask AgriSaarthi
+          {t.chrome.askAgriSaarthi}
         </span>
-        <span className="sr-only">Ask AgriSaarthi AI Assistant</span>
+        <span className="sr-only">{t.robot.launcherAria}</span>
       </button>
     </>
   );

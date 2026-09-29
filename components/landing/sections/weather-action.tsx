@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { ArrowRight, Thermometer, Wind, Droplets, Umbrella, RefreshCw } from "lucide-react";
-import { WEATHER_ACTION } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
 import { useFarmProfile } from "@/lib/farm-context";
 import { useWeather } from "@/lib/weather/use-weather";
 import { deriveFarmWeatherAction } from "@/lib/weather/weather-actions";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * WEATHER → ACTION — the differentiator, shown as DATA → DECISION.
@@ -18,17 +18,19 @@ export function WeatherAction() {
   const { profile } = useFarmProfile();
   const { snapshot, status, refresh } = useWeather(profile.location);
   const action = snapshot ? deriveFarmWeatherAction(snapshot, profile) : null;
+  const { t } = useLanguage();
+  const L = t.landing;
 
   const metrics = snapshot
     ? [
         {
           icon: Thermometer,
-          label: "Temperature",
+          label: t.featureCards.metricTemperature,
           value: `${Math.round(snapshot.current.temperatureC)}°C`,
         },
         {
           icon: Umbrella,
-          label: "Rain chance",
+          label: t.featureCards.metricRainChance,
           value:
             snapshot.forecast[0]?.precipitationProbabilityPercent !== undefined
               ? `${snapshot.forecast[0].precipitationProbabilityPercent}%`
@@ -36,12 +38,12 @@ export function WeatherAction() {
         },
         {
           icon: Wind,
-          label: "Wind",
+          label: t.featureCards.metricWind,
           value: `${Math.round(snapshot.current.windKmph)} km/h`,
         },
         {
           icon: Droplets,
-          label: "Humidity",
+          label: t.featureCards.metricHumidity,
           value:
             snapshot.current.humidityPercent !== undefined
               ? `${Math.round(snapshot.current.humidityPercent)}%`
@@ -61,18 +63,18 @@ export function WeatherAction() {
           <Reveal>
             <p className="eyebrow">
               <span aria-hidden className="h-px w-8 bg-terracotta-600" />
-              {WEATHER_ACTION.eyebrow}
+              {L.weatherAction.eyebrow}
             </p>
           </Reveal>
           <SplitText
             id="weather-heading"
             as="h2"
-            lines={WEATHER_ACTION.headlineLines}
+            lines={[...L.weatherAction.headlineLines]}
             className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-tight text-canopy-950 sm:text-6xl lg:text-7xl"
           />
           <Reveal delay={200}>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-loam-700 sm:text-lg">
-              {WEATHER_ACTION.body}
+              {L.weatherAction.body}
             </p>
           </Reveal>
         </div>
@@ -84,19 +86,19 @@ export function WeatherAction() {
             <div className="rounded-2xl border border-canopy-200 bg-white shadow-card">
               <div className="flex items-center justify-between border-b border-canopy-100 px-6 py-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-loam-500">
-                  Weather
+                  {L.weatherPanelLabel}
                 </p>
                 {snapshot ? (
                   <span className="flex items-center gap-2">
                     <span className="source-tag border-canopy-200 bg-canopy-50 text-canopy-700">
                       {snapshot.isFallback
-                        ? WEATHER_ACTION.dataLabels.fallback
-                        : WEATHER_ACTION.dataLabels.live}
+                        ? L.weatherAction.dataFallback
+                        : L.weatherAction.dataLive}
                     </span>
                     <button
                       type="button"
                       onClick={refresh}
-                      aria-label="Refresh weather"
+                      aria-label={t.featureCards.weatherRefreshAria}
                       className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-canopy-200 text-canopy-700 transition-colors hover:bg-canopy-50"
                     >
                       <RefreshCw className="h-3.5 w-3.5" aria-hidden />
@@ -130,8 +132,8 @@ export function WeatherAction() {
                 ) : (
                   <p className="py-6 text-sm text-loam-600">
                     {status === "unavailable"
-                      ? "Weather is unavailable right now — the action panel shows the rule that would apply."
-                      : "Loading live conditions…"}
+                      ? L.weatherUnavailableNote
+                      : L.weatherLoadingNote}
                   </p>
                 )}
               </div>
@@ -151,7 +153,7 @@ export function WeatherAction() {
             <div className="rounded-2xl bg-canopy-950 text-white shadow-deep">
               <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                  Farm action
+                  {L.actionPanelLabel}
                 </p>
                 <span className="source-tag border-lime/30 bg-lime/10 text-lime">
                   Decision Engine
@@ -167,15 +169,17 @@ export function WeatherAction() {
                       {action.message}
                     </p>
                     <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-relaxed text-white/55">
-                      <span className="font-semibold text-white/75">Why: </span>
+                      <span className="font-semibold text-white/75">
+                        {L.actionWhyPrefix}
+                      </span>
                       {action.reason}
                     </p>
                   </>
                 ) : (
                   <p className="py-6 text-sm text-white/65">
                     {status === "unavailable"
-                      ? "Awaiting conditions — the transparent rules compare rain, heat and wind thresholds before suggesting anything."
-                      : "Reading conditions…"}
+                      ? L.actionAwaitingNote
+                      : L.actionLoadingNote}
                   </p>
                 )}
               </div>
@@ -186,10 +190,10 @@ export function WeatherAction() {
         <Reveal delay={320}>
           <div className="mt-10">
             <Link
-              href={WEATHER_ACTION.cta.href}
+              href="/weather"
               className="group inline-flex min-h-12 items-center gap-2 text-base font-semibold text-terracotta-700"
             >
-              {WEATHER_ACTION.cta.label}
+              {L.weatherAction.cta}
               <ArrowRight
                 className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
                 aria-hidden

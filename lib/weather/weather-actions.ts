@@ -3,6 +3,8 @@ import type {
   WeatherSnapshot,
 } from "@/lib/weather/types";
 import type { FarmProfile } from "@/lib/types";
+import type { Lang } from "@/lib/i18n/types";
+import { t as dict } from "@/lib/i18n";
 
 /**
  * WEATHER → FARM ACTION ENGINE (pure, deterministic rules)
@@ -18,6 +20,9 @@ import type { FarmProfile } from "@/lib/types";
  * Conservative wording: "consider / review / monitor" — never commands.
  * Farm context personalizes wording only; the weather data is the trigger.
  * No crop is ever invented.
+ *
+ * English is the deterministic default (verify suites assert English
+ * strings); pass `lang` to receive the action in the selected UI language.
  */
 
 /* ------------------------------------------------------------------ */
@@ -40,12 +45,16 @@ const STANDARD_CAVEAT =
 
 export function deriveFarmWeatherAction(
   weather: WeatherSnapshot,
-  profile: Pick<FarmProfile, "selectedCrop" | "irrigation" | "soilType">
+  profile: Pick<FarmProfile, "selectedCrop" | "irrigation" | "soilType">,
+  lang: Lang = "en"
 ): FarmWeatherAction {
   const { current, forecast } = weather;
   const crop = profile.selectedCrop?.trim();
   const cropPhrase = crop ? ` for your ${crop}` : "";
   const cropSuffix = crop ? ` (${crop})` : "";
+
+  /* --- Localized rule strings (English default) ------------------- */
+  const L = lang === "hi" ? dict("hi").weatherLib : null;
 
   /* --- Rain probability across today + tomorrow ------------------- */
   const todayRain = forecast[0]?.precipitationProbabilityPercent ?? 0;
@@ -60,6 +69,17 @@ export function deriveFarmWeatherAction(
 
   /* --- RULE B — heavy precipitation (highest priority) ------------ */
   if (maxPrecipMm >= ACTION_THRESHOLDS.heavyPrecipitationMm) {
+    if (L) {
+      return {
+        title: L.excessWater.title,
+        message: L.excessWater.message(crop),
+        priority: "caution",
+        category: "excess-water",
+        reason: L.excessWater.reason(maxPrecipMm.toFixed(1)),
+        recommendation: L.excessWater.recommendation(crop),
+        caveat: L.standardCaveat,
+      };
+    }
     return {
       title: "Prepare for possible excess water",
       message: `Significant precipitation is forecast in the next 3 days${cropSuffix}.`,
@@ -73,7 +93,25 @@ export function deriveFarmWeatherAction(
 
   /* --- RULE A — high rain probability ------------------------------ */
   if (maxRainPercent >= ACTION_THRESHOLDS.rainProbabilityPercent) {
-    const day = tomorrowRain > todayRain ? "tomorrow" : "today";
+    const isTomorrow = tomorrowRain > todayRain;
+    if (L) {
+      const irrigationNote =
+        profile.irrigation === "rain-fed" ? "" : L.irrigation.irrigationDelayNote;
+      return {
+        title: L.irrigation.title,
+        message: L.irrigation.message(
+          isTomorrow ? L.dayWord.tomorrow : L.dayWord.today,
+          Math.max(todayRain, tomorrowRain),
+          crop,
+        ),
+        priority: "caution",
+        category: "irrigation",
+        reason: L.irrigation.reason(Math.max(todayRain, tomorrowRain)),
+        recommendation: L.irrigation.recommendation(irrigationNote),
+        caveat: L.standardCaveat,
+      };
+    }
+    const day = isTomorrow ? "tomorrow" : "today";
     const irrigationNote =
       profile.irrigation === "rain-fed"
         ? ""
@@ -91,6 +129,17 @@ export function deriveFarmWeatherAction(
 
   /* --- RULE C — hot conditions ------------------------------------- */
   if (current.temperatureC >= ACTION_THRESHOLDS.heatTemperatureC) {
+    if (L) {
+      return {
+        title: L.heat.title,
+        message: L.heat.message(Math.round(current.temperatureC), crop),
+        priority: "caution",
+        category: "heat",
+        reason: L.heat.reason(ACTION_THRESHOLDS.heatTemperatureC),
+        recommendation: L.heat.recommendation(crop),
+        caveat: L.standardCaveat,
+      };
+    }
     return {
       title: "Monitor crop water stress",
       message: `High temperature of ${Math.round(current.temperatureC)}°C recorded${cropSuffix}.`,
@@ -104,6 +153,17 @@ export function deriveFarmWeatherAction(
 
   /* --- RULE D — strong wind ---------------------------------------- */
   if (current.windKmph >= ACTION_THRESHOLDS.strongWindKmph) {
+    if (L) {
+      return {
+        title: L.wind.title,
+        message: L.wind.message(Math.round(current.windKmph)),
+        priority: "caution",
+        category: "operations",
+        reason: L.wind.reason(ACTION_THRESHOLDS.strongWindKmph),
+        recommendation: L.wind.recommendation,
+        caveat: L.standardCaveat,
+      };
+    }
     return {
       title: "Consider postponing vulnerable field operations",
       message: `Strong wind of ${Math.round(current.windKmph)} km/h recorded.`,
@@ -117,12 +177,27 @@ export function deriveFarmWeatherAction(
   }
 
   /* --- RULE E — no meaningful trigger ------------------------------- */
+  if (L) {
+    return {
+      title: L.monitoring.title,
+      message: L.monitoring.message,
+      priority: "normal",
+      category: "monitoring",
+      reason: L.monitoring.reason(
+        Math.round(current.temperatureC),
+        Math.round(current.windKmph),
+        maxRainPercent,
+      ),
+      recommendation: L.monitoring.recommendation(crop),
+      caveat: L.standardCaveat,
+    };
+  }
   return {
     title: "Continue normal monitoring",
     message: "No major weather trigger detected by the current decision rules.",
     priority: "normal",
     category: "monitoring",
-    reason: `Conditions are within configured thresholds: ${Math.round(current.temperatureC)}°C, ${Math.round(current.windKmph)} km/h wind, ${Math.max(todayRain, tomorrowRain)}% max rain probability.`,
+    reason: `Conditions are within configured thresholds: ${Math.round(current.temperatureC)}°C, ${Math.round(current.windKmph)} km/h wind, ${maxRainPercent}% max rain probability.`,
     recommendation: `Keep up routine crop observation${cropPhrase}. Re-check weather before scheduling major field work.`,
     caveat: STANDARD_CAVEAT,
   };

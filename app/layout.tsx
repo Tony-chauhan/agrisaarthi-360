@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Instrument_Sans } from "next/font/google";
+import { Fraunces, Instrument_Sans, Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import { FarmProvider } from "@/lib/farm-context";
 import { TimelineProvider } from "@/lib/timeline/timeline-context";
 import { PlannerProvider } from "@/lib/planner/task-store";
+import { LanguageProvider } from "@/lib/i18n/language-context";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -14,6 +15,13 @@ const fraunces = Fraunces({
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-instrument-sans",
+  display: "swap",
+});
+
+// Hindi (Devanagari) support — Fraunces/Instrument Sans are Latin-only.
+const notoDevanagari = Noto_Sans_Devanagari({
+  subsets: ["devanagari"],
+  variable: "--font-noto-devanagari",
   display: "swap",
 });
 
@@ -48,13 +56,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${instrumentSans.variable}`}>
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${instrumentSans.variable} ${notoDevanagari.variable}`}
+    >
       <body>
-        <FarmProvider>
-          <TimelineProvider>
-            <PlannerProvider>{children}</PlannerProvider>
-          </TimelineProvider>
-        </FarmProvider>
+        <LanguageProvider>
+          <FarmProvider>
+            <TimelineProvider>
+              <PlannerProvider>{children}</PlannerProvider>
+            </TimelineProvider>
+          </FarmProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

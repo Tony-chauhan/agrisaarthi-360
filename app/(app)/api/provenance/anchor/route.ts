@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isRateLimited, rateLimitedResponse } from "@/lib/rate-limit";
 import { anchorProvenanceRecord } from "@/lib/provenance/provider";
 import { lookupLocalRecord } from "@/lib/provenance/local-adapter";
 
@@ -17,6 +18,11 @@ import { lookupLocalRecord } from "@/lib/provenance/local-adapter";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  // Per-IP abuse mitigation on explicit anchoring (chain cost guard).
+  if (isRateLimited(request, { max: 10 })) {
+    return rateLimitedResponse();
+  }
+
   let body: unknown;
   try {
     body = await request.json();

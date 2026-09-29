@@ -5,22 +5,31 @@ import Link from "next/link";
 import { ArrowRight, MoveRight } from "lucide-react";
 import { gsap, ensureGsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
-import { JOURNEY } from "../copy";
 import { SplitText } from "../motion/split-text";
 import { Reveal } from "../motion/reveal";
 import { useMotion } from "../motion/motion-provider";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * HOW IT WORKS — the signature pinned section, typography-led.
  * Vertical scroll scrubs into horizontal movement through the five
  * stages FARM → DECISION → ACTION → PLAN → PROOF. Each stage is set in
- * large editorial type with its real capability and destination — no
- * photography. Runs only where it is genuinely good (motion-capable
+ * large editorial type with its real capability, detail and destination —
+ * no photography. Runs only where it is genuinely good (motion-capable
  * tiers); everywhere else the same five stages stack vertically with
  * full content parity. Uses the canonical GSAP module (lib/gsap).
  */
+const STAGE_HREFS = [
+  "/farm-profile",
+  "/crop-advisor",
+  "/weather",
+  "/planner",
+  "/timeline",
+] as const;
 export function Journey() {
   const { tier, reducedMotion } = useMotion();
+  const { t } = useLanguage();
+  const L = t.landing;
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLSpanElement>(null);
@@ -86,21 +95,22 @@ export function Journey() {
           <Reveal>
             <p className="eyebrow text-lime">
               <span aria-hidden className="h-px w-8 bg-lime" />
-              {JOURNEY.eyebrow}
+              {L.journey.eyebrow}
             </p>
           </Reveal>
           <SplitText
             id="journey-heading"
             as="h2"
-            lines={[JOURNEY.headline]}
+            lines={[L.journey.headline]}
             className="mt-3 font-display text-3xl font-semibold leading-[1.12] tracking-tight sm:text-4xl lg:text-5xl"
           />
           <Reveal delay={140}>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-canopy-200 sm:text-base">
-              {JOURNEY.body}
+              {L.journey.body}
               {pinned ? (
                 <span className="ml-2 inline-flex items-center gap-1 text-canopy-300">
-                  Keep scrolling <MoveRight className="h-3.5 w-3.5" aria-hidden />
+                  {L.journeyKeepScrolling}{" "}
+                  <MoveRight className="h-3.5 w-3.5" aria-hidden />
                 </span>
               ) : null}
             </p>
@@ -123,7 +133,7 @@ export function Journey() {
               : "mx-auto mt-12 flex w-full max-w-7xl flex-col gap-14 px-4 sm:px-6 lg:px-8"
           }
         >
-          {JOURNEY.stages.map((stage, i) => (
+          {L.journey.stages.map((stage, i) => (
             <article
               key={stage.name}
               className={
@@ -152,7 +162,7 @@ export function Journey() {
                 </p>
               </div>
               <Link
-                href={stage.href}
+                href={STAGE_HREFS[i] ?? "/dashboard"}
                 className="group inline-flex min-h-11 w-fit items-center gap-2 text-sm font-semibold text-sprout-400 transition-colors hover:text-white"
               >
                 {stage.link}

@@ -16,6 +16,7 @@ import { TaskCard } from "@/components/planner/task-card";
 import { EmptyState, SkeletonCard } from "@/components/ui/states";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * PlannerBoard — the P1.1 board. Generates the plan from the CURRENT farm
@@ -28,37 +29,41 @@ export function PlannerBoard() {
   const { snapshot } = useWeather(profile.location);
   const { applyPlan, tasks, setTaskStatus } = usePlanner();
   const { emitEvent } = useTimeline();
+  const { t, lang } = useLanguage();
 
   const [ready, setReady] = useState(false);
 
   const weatherAction = useMemo(
-    () => (snapshot ? deriveFarmWeatherAction(snapshot, profile) : null),
-    [snapshot, profile]
+    () => (snapshot ? deriveFarmWeatherAction(snapshot, profile, lang) : null),
+    [snapshot, profile, lang]
   );
 
   const plan: PlannerPlan = useMemo(
     () =>
-      generatePlan({
-        profile: {
-          location: profile.location,
-          farmSizeAcres: profile.farmSizeAcres,
-          season: profile.season,
-          selectedCrop: profile.selectedCrop,
+      generatePlan(
+        {
+          profile: {
+            location: profile.location,
+            farmSizeAcres: profile.farmSizeAcres,
+            season: profile.season,
+            selectedCrop: profile.selectedCrop,
+          },
+          weatherAction: weatherAction
+            ? {
+                title: weatherAction.title,
+                message: weatherAction.message,
+                reason: weatherAction.reason,
+                recommendation: weatherAction.recommendation,
+                category: weatherAction.category,
+                priority: weatherAction.priority,
+              }
+            : null,
+          latestHealthCheck,
+          latestOperation,
         },
-        weatherAction: weatherAction
-          ? {
-              title: weatherAction.title,
-              message: weatherAction.message,
-              reason: weatherAction.reason,
-              recommendation: weatherAction.recommendation,
-              category: weatherAction.category,
-              priority: weatherAction.priority,
-            }
-          : null,
-        latestHealthCheck,
-        latestOperation,
-      }),
-    [profile, weatherAction, latestHealthCheck, latestOperation]
+        lang
+      ),
+    [profile, weatherAction, latestHealthCheck, latestOperation, lang]
   );
 
   // Merge the freshly generated plan into the session store once per render.
@@ -77,12 +82,12 @@ export function PlannerBoard() {
   if (!hasCrop) {
     return (
       <EmptyState
-        title="No farm plan yet — select a crop first"
-        description="The planner builds tasks from your crop calendar, weather action and farm context. Choose a crop to get started."
+        title={t.planner.noPlanTitle}
+        description={t.planner.noPlanBody}
         action={
           <Link href="/crop-advisor">
             <Button variant="accent" leftIcon={<Sprout className="h-4 w-4" aria-hidden />}>
-              Open Crop Advisor
+              {t.planner.openAdvisor}
             </Button>
           </Link>
         }
@@ -98,22 +103,24 @@ export function PlannerBoard() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-loam-600">
-          Plan for <span className="font-semibold text-canopy-900">{profile.selectedCrop}</span>{" "}
-          · {profile.season} season · {activeCount} active task
-          {activeCount === 1 ? "" : "s"}
+          {t.planner.planFor(profile.selectedCrop ?? "")}{" "}
+          {t.planner.seasonActive(t.common.seasons[profile.season], activeCount)}
         </p>
         <div className="flex items-center gap-2">
           <Badge>
             <RefreshCw className="h-3 w-3" aria-hidden />
-            DECISION ENGINE
+            {t.weather.decisionEngine}
           </Badge>
           <button
             type="button"
             onClick={() =>
               emitEvent({
                 eventType: "FARM_RECORD_CREATED",
-                title: "Farm record snapshot created",
-                description: `Plan snapshot for ${profile.selectedCrop} at ${profile.location}.`,
+                title: t.planner.recordEventTitle,
+                description: t.planner.recordEventDescription(
+                  profile.selectedCrop ?? "",
+                  profile.location,
+                ),
                 source: "rules-based",
                 entityType: "record",
                 entityId: `record-${Date.now().toString(36)}`,
@@ -121,7 +128,7 @@ export function PlannerBoard() {
             }
             className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg border border-canopy-200 px-3 text-sm font-medium text-canopy-700 hover:bg-canopy-50"
           >
-            Create farm record
+            {t.planner.createRecord}
           </button>
         </div>
       </div>
@@ -150,9 +157,9 @@ export function PlannerBoard() {
       )}
 
       {completedOrSkipped(tasks).length > 0 ? (
-        <section aria-label="Completed and skipped tasks" className="flex flex-col gap-2">
+        <section aria-label={t.planner.completedAria} className="flex flex-col gap-2">
           <h3 className="font-display text-base font-semibold text-canopy-900">
-            Completed &amp; skipped
+            {t.planner.completedSkipped}
           </h3>
           {completedOrSkipped(tasks).map((task) => (
             <TaskCard key={task.id} task={task} onStatusChange={setTaskStatus} />
@@ -206,4 +213,3 @@ function completedOrSkipped(tasks: FarmTask[]): FarmTask[] {
     .filter((t) => t.status === "completed" || t.status === "skipped")
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
-
